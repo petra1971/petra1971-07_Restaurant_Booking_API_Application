@@ -1,6 +1,6 @@
 package se.edugrade.java25.restaurant.entity;
 
-public enum BoookingStatus {
+public enum BookingStatus {
     REQUSTED,
     CONFIRMED,
     SEATED,
