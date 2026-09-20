@@ -1,0 +1,21 @@
+package se.edugrade.java25.restaurant.dto;
+
+import se.edugrade.java25.restaurant.entity.Restaurant;
+
+public record RestaurantResponse(
+        Long id,
+        String name,
+        String cuisine,
+        String city,
+        int seats
+) {
+    public static RestaurantResponse from(Restaurant restaurant) {
+        return new RestaurantResponse(
+                restaurant.getId(),
+                restaurant.getName(),
+                restaurant.getCuisine(),
+                restaurant.getCity(),
+                restaurant.getSeats()
+        );
+    }
+}
