@@ -2,6 +2,7 @@ package se.edugrade.java25.restaurant.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -11,28 +12,28 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long Id;
 
-    @ManyToOne
-    @JsonIgnore // Booking - barnsidan, serialiseras INTE. Förhindrar cirkulära refrenser
-    @JoinColumn(name = "restaurant_id")
-    private Restaurant restaurant;
-
     private String bookersName;
     private String email;
     private LocalDateTime arrivalTime;
     private int bookingSize;
 
+    @ManyToOne
+    @JsonIgnore // Booking - barnsidan, serialiseras INTE. Förhindrar cirkulära refrenser
+    @JoinColumn(name = "restaurant_id")
+    private Restaurant restaurant;
+
     @Enumerated(EnumType.STRING)
-    private BoookingStatus status;
+    private BookingStatus status;
 
     // JPA requires a no-arg constructor.
     protected Booking() { }
 
-    public Booking(Restaurant restaurant, String bookersName, String email, LocalDateTime arrivalTime, int bookingSize, BoookingStatus status) {
-        this.restaurant = restaurant;
+    public Booking(String bookersName, String email, LocalDateTime arrivalTime, int bookingSize, Restaurant restaurant, BookingStatus status) {
         this.bookersName = bookersName;
         this.email = email;
         this.arrivalTime = arrivalTime;
         this.bookingSize = bookingSize;
+        this.restaurant = restaurant;
         this.status = status;
     }
 
@@ -80,11 +81,11 @@ public class Booking {
         this.bookingSize = bookingSize;
     }
 
-    public BoookingStatus getStatus() {
+    public BookingStatus getStatus() {
         return status;
     }
 
-    public void setStatus(BoookingStatus status) {
+    public void setStatus(BookingStatus status) {
         this.status = status;
     }
 }
