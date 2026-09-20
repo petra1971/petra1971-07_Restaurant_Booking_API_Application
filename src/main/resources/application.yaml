@@ -6,3 +6,20 @@ spring:
 # Falls back to 8080 when you run it locally.
 server:
   port: ${PORT:8080}
+
+  # In-memory H2, thrown away when the JVM stops. A fresh run always starts
+  # from the same 5 seeded tasks.
+  datasource:
+    url: "jdbc:h2:mem:restaurant-api;DB_CLOSE_DELAY=-1"
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+
+  mvc:
+    # NOT a default. Spring Boot answers its own built-in exceptions with an
+    # empty body unless this is on. Turning it on makes a 404 arrive as an
+    # RFC 9457 problem+json document instead.
+    problemdetails:
+      enabled: true
