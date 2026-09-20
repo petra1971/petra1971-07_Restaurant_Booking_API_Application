@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table
 public class Booking {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long Id;
@@ -16,7 +15,7 @@ public class Booking {
     @JsonIgnore // Booking - barnsidan, serialiseras INTE. Förhindrar cirkulära refrenser
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
-
+    
     private String bookersName;
     private String email;
     private LocalDateTime arrivalTime;
