@@ -45,7 +45,7 @@ Accept: application/json
 #   "restaurantId": 1,
 #   "guestName": "Alice Andersson",
 #   "guestEmail": "alice"@"example.com",
-#   "dateTime": "2026-10-20T19:00:00",
+#   "arrivalTime": "2026-10-20T19:00:00",
 #   "partySize": 4
 # }
 
