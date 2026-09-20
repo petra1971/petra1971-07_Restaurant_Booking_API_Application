@@ -15,7 +15,7 @@ public class Booking {
     @JsonIgnore // Booking - barnsidan, serialiseras INTE. Förhindrar cirkulära refrenser
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
-    
+
     private String bookersName;
     private String email;
     private LocalDateTime arrivalTime;
