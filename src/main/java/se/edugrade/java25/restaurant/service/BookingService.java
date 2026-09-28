@@ -1,18 +1,17 @@
 package se.edugrade.java25.restaurant.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import se.edugrade.java25.restaurant.dto.BookingResponse;
-import se.edugrade.java25.restaurant.dto.BookingRequest;
-import se.edugrade.java25.restaurant.entity.Booking;
-import se.edugrade.java25.restaurant.entity.BookingStatus;
-import se.edugrade.java25.restaurant.entity.Restaurant;
-import se.edugrade.java25.restaurant.exception.BookingNotFoundException;
-import se.edugrade.java25.restaurant.exception.RestaurantNotFoundException;
+import org.springframework.web.server.ResponseStatusException;
+import se.edugrade.java25.restaurant.dto.BookingResource;
+import se.edugrade.java25.restaurant.dto.CreateBookingRequest;
+import se.edugrade.java25.restaurant.dto.OffsetPage;
+import se.edugrade.java25.restaurant.model.Booking;
+import se.edugrade.java25.restaurant.model.Restaurant;
 import se.edugrade.java25.restaurant.repository.BookingRepository;
 import se.edugrade.java25.restaurant.repository.RestaurantRepository;
 
@@ -20,51 +19,78 @@ import se.edugrade.java25.restaurant.repository.RestaurantRepository;
 @Service
 public class BookingService {
 
-    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
+    private final BookingRepository bookings;
+    private final RestaurantRepository restaurants;
 
-    private final BookingRepository bookingRepository;
-    private final RestaurantRepository restaurantRepository;
+    private static final int MAX_PAGE_SIZE = 100;
 
-    public BookingService(BookingRepository bookingRepository, RestaurantRepository restaurantRepository) {
-        this.bookingRepository = bookingRepository;
-        this.restaurantRepository = restaurantRepository;
+    public BookingService(BookingRepository bookings, RestaurantRepository restaurants) {
+        this.bookings = bookings;
+        this.restaurants = restaurants;
     }
 
     @Transactional
-    public BookingResponse createBooking(Long restaurantId, BookingRequest request) {
-        Restaurant restaurant = getRestaurantByIdOrThrow(restaurantId);
-        Booking booking = BookingRequest.toBooking(request, restaurant);
-        return BookingResponse.from(bookingRepository.save(booking));
+    public BookingResource createBooking(CreateBookingRequest request) {
+        Restaurant restaurant = getRestaurantByIdOrThrow(request.restaurantId());
+        Booking booking = CreateBookingRequest.toBooking(request, restaurant);
+        Booking saved = bookings.save(booking);
+        return BookingResource.from(saved);
     }
 
-    public Page<BookingResponse> findAll(Pageable pageable) {
-        return bookingRepository.findAll(pageable)
-                .map(booking -> BookingResponse.from(booking));
+    public OffsetPage findAll(int page, int size) {
+        Pageable pageable = PageRequest.of(page, clamp(size));
+        Page<Booking> result = bookings.findAll(pageable);
+
+        return new OffsetPage(
+                result.getContent()
+                        .stream()
+                        .map(BookingResource::from)
+                        .toList(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages()
+        );
     }
 
-    public BookingResponse findById(Long id) {
+    //Ta requested men se till att värdet inte kan bli mindre än ett minsta värde eller större än ett största värde.
+    private static int clamp(int requested) {
+        return  Math.min(Math.max(requested, 1), MAX_PAGE_SIZE);
+    }
+
+    public BookingResource findById(Long id) {
         Booking booking = getBookingByIdOrThrow(id);
-        return BookingResponse.from(booking);
+        return BookingResource.from(booking);
     }
 
-    // Lägg till fler övergångar
     @Transactional
-    public Booking confirm(Long id) {
+    public BookingResource confirm(Long id) {
         Booking booking = getBookingByIdOrThrow(id);
-        if (booking.getStatus() == BookingStatus.CONFIRMED)
-            throw new IllegalStateException("Booking already confirmed: " + id);
+        booking.confirm();
+        return BookingResource.from(bookings.save(booking));
+    }
 
-        booking.setStatus(BookingStatus.CONFIRMED);
-        return bookingRepository.save(booking);
+    @Transactional
+    public BookingResource seat(Long id) {
+        Booking booking = getBookingByIdOrThrow(id);
+        booking.seat();
+        return BookingResource.from(bookings.save(booking));
+    }
+
+    @Transactional
+    public BookingResource cancel(Long id) {
+        Booking booking = getBookingByIdOrThrow(id);
+        booking.cancel();
+        return BookingResource.from(bookings.save(booking));
     }
 
     private Booking getBookingByIdOrThrow(Long id) {
-        return bookingRepository.findById(id)
-                .orElseThrow(() -> new BookingNotFoundException(id));
+        return bookings.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No booking found with id " + id));
     }
 
     private Restaurant getRestaurantByIdOrThrow(Long id) {
-        return restaurantRepository.findById(id)
-                .orElseThrow(() -> new RestaurantNotFoundException(id));
+        return restaurants.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No restaurant found with id " + id));
     }
 }
