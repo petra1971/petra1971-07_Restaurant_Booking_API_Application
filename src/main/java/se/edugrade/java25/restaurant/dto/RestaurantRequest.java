@@ -1,7 +1,7 @@
 package se.edugrade.java25.restaurant.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import se.edugrade.java25.restaurant.entity.Restaurant;
+import se.edugrade.java25.restaurant.model.Restaurant;
 
 public record RestaurantRequest(
         @NotBlank String name,
