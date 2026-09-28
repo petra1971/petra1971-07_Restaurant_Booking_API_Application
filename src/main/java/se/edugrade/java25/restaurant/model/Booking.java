@@ -17,7 +17,7 @@ public class Booking {
     private String guestName;
     private String guestEmail;
     private LocalDateTime arrivalTime;
-    private Integer partySize;
+    private int partySize;
     private Instant updatedAt;
 
     @ManyToOne
@@ -31,7 +31,7 @@ public class Booking {
     // JPA requires a no-arg constructor.
     protected Booking() { }
 
-    public Booking(String guestName, String guestEmail, LocalDateTime arrivalTime, Integer partySize, Restaurant restaurant) {
+    public Booking(String guestName, String guestEmail, LocalDateTime arrivalTime, int partySize, Restaurant restaurant) {
         this.guestName = guestName;
         this.guestEmail = guestEmail;
         this.arrivalTime = arrivalTime;

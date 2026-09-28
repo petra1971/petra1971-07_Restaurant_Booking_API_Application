@@ -9,18 +9,18 @@ import java.time.LocalDateTime;
 
 public record CreateBookingRequest(
         @NotNull Long restaurantId,
-        @NotBlank String bookersName,
-        @NotBlank @Email String email,
+        @NotBlank String guestName,
+        @NotBlank @Email String guestEmail,
         @NotBlank LocalDateTime arrivalTime,
-        @NotNull Integer seats
+        @NotNull int partySize
         ) {
 
         public static Booking toBooking(CreateBookingRequest request, Restaurant restaurant) {
                 return new Booking(
-                        request.bookersName,
-                        request.email,
+                        request.guestName,
+                        request.guestEmail,
                         request.arrivalTime,
-                        request.seats,
+                        request.partySize,
                         restaurant
                 );
             }

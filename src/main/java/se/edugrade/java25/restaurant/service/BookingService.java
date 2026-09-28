@@ -9,7 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import se.edugrade.java25.restaurant.dto.BookingResource;
 import se.edugrade.java25.restaurant.dto.CreateBookingRequest;
-import se.edugrade.java25.restaurant.dto.OffsetPage;
+import se.edugrade.java25.restaurant.dto.OffsetBookingPage;
+import se.edugrade.java25.restaurant.exception.BookingNotFoundException;
+import se.edugrade.java25.restaurant.exception.RestaurantNotFoundException;
 import se.edugrade.java25.restaurant.model.Booking;
 import se.edugrade.java25.restaurant.model.Restaurant;
 import se.edugrade.java25.restaurant.repository.BookingRepository;
@@ -30,18 +32,18 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResource createBooking(CreateBookingRequest request) {
+    public BookingResource create(CreateBookingRequest request) {
         Restaurant restaurant = getRestaurantByIdOrThrow(request.restaurantId());
         Booking booking = CreateBookingRequest.toBooking(request, restaurant);
         Booking saved = bookings.save(booking);
         return BookingResource.from(saved);
     }
 
-    public OffsetPage findAll(int page, int size) {
+    public OffsetBookingPage findAll(int page, int size) {
         Pageable pageable = PageRequest.of(page, clamp(size));
         Page<Booking> result = bookings.findAll(pageable);
 
-        return new OffsetPage(
+        return new OffsetBookingPage(
                 result.getContent()
                         .stream()
                         .map(BookingResource::from)
@@ -86,11 +88,11 @@ public class BookingService {
 
     private Booking getBookingByIdOrThrow(Long id) {
         return bookings.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No booking found with id " + id));
+                .orElseThrow(() -> new BookingNotFoundException(id));
     }
 
     private Restaurant getRestaurantByIdOrThrow(Long id) {
         return restaurants.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No restaurant found with id " + id));
+                .orElseThrow(() -> new RestaurantNotFoundException(id));
     }
 }
