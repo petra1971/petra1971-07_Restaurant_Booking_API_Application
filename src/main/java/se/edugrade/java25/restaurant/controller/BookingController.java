@@ -7,8 +7,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import se.edugrade.java25.restaurant.dto.CreateBookingRequest;
 import se.edugrade.java25.restaurant.dto.BookingResource;
-import se.edugrade.java25.restaurant.dto.OffsetPage;
+import se.edugrade.java25.restaurant.dto.OffsetBookingPage;
 import se.edugrade.java25.restaurant.service.BookingService;
+import se.edugrade.java25.restaurant.service.IdempotencyService;
 
 import java.net.URI;
 import java.util.Optional;
@@ -21,11 +22,12 @@ public class BookingController {
     private static final String XML = MediaType.APPLICATION_ATOM_XML_VALUE;
 
     private final BookingService bookingService;
-    private final IdempotencyGuard idempotency;
+    private final IdempotencyService idempotencyService;
 
-    public BookingController(BookingService bookingService, IdempotencyGuard idempotency) {
+    public BookingController(BookingService bookingService,
+                             IdempotencyService idempotencyService) {
         this.bookingService = bookingService;
-        this.idempotency = idempotency;
+        this.idempotencyService = idempotencyService;
     }
 
     /**
@@ -33,7 +35,7 @@ public class BookingController {
      * page =  sida, size = hur många poster per sida
      */
     @GetMapping(produces = {JSON, XML})
-    public ResponseEntity<OffsetPage> allBookings(
+    public ResponseEntity<OffsetBookingPage> allBookings(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
 
@@ -41,7 +43,7 @@ public class BookingController {
     }
 
     @GetMapping(path = "/{id}", produces = {JSON, XML})
-    public BookingResource bookingsById(@PathVariable Long id) {
+    public BookingResource bookingsById(@PathVariable @Valid Long id) {
         return bookingService.findById(id);
     }
 
@@ -53,40 +55,24 @@ public class BookingController {
     @PostMapping(consumes = JSON, produces = {JSON, XML})
     public ResponseEntity<Object> create(
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
-            @RequestBody CreateBookingRequest body) {
+            @RequestBody @Valid CreateBookingRequest body) {
 
-        if (idempotencyKey == null) {
-            return doCreate(body);
-        }
-        // The check happens BEFORE the create logic runs. Checking afterwards
-        // would mean the duplicate already exists by the time we notice.
-        Optional<ResponseEntity<Object>> replay =
-                idempotency.claim(idempotencyKey, IdempotencyGuard.hash(body));
-        if (replay.isPresent()) {
-            return replay.get();
-        }
-
-        ResponseEntity<Object> created =
-                doCreate(body);
-        idempotency.store(idempotencyKey, created.getStatusCode().value(),
-                created.getHeaders().getFirst("Location"), created.getBody());
-        return created;
-}
+        // Pga DRY har jag brutit ut koden för create till en idempotencyService eftersom den fanns i båda entiteterna
+        return idempotencyService.createWithIdempotency(
+                idempotencyKey,
+                body,
+                () -> doCreate(body)
+        );
+    }
 
     private ResponseEntity<Object> doCreate(CreateBookingRequest body) {
-        BookingResource saved = bookingService.createBooking(body);
+        BookingResource saved = bookingService.create(body);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .replaceQuery(null) //Tar bort eventuella query-parametrar.
-                .path("/{id}") //Utgår från URL:en för den aktuella HTTP-requesten och lägger till /{id}
-                .buildAndExpand(saved.id()) //Ersätter {id} med ID:t från det sparade objektet
-                .toUri(); //Gör den färdiga URL:en till ett Java URI-objekt
-        return ResponseEntity.created(location).body(saved); // Returnerar ett HTTP-svar med:
-                                                                //  HTTP/1.1 201 Created
-                                                                //  Location: /api/tasks/42
-                                                                //   {
-                                                                //     "id": 42,
-                                                                //      ...
-                                                                //    }
+                .replaceQuery(null)                 //Tar bort eventuella query-parametrar.
+                .path("/{id}")                      //Utgår från URL:en för den aktuella HTTP-requesten och lägger till /{id}
+                .buildAndExpand(saved.id())         //Ersätter {id} med ID:t från det sparade objektet
+                .toUri();                           //Gör den färdiga URL:en till ett Java URI-objekt
+        return ResponseEntity.created(location).body(saved); // Returnerar ett HTTP-svar med: HTTP/1.1 201 Created, location: /api/tasks/42 samt body
     }
 
     @PostMapping(path = "/{id}/confirm", produces = {JSON, XML})

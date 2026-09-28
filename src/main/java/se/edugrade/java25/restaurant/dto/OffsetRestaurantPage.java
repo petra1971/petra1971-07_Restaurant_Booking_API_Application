@@ -14,8 +14,8 @@ import java.util.List;
  * database to read and throw away twenty thousand rows before it returns
  * anything.</p>
  */
-public record OffsetPage(
-        List<BookingResource> items,
+public record OffsetRestaurantPage(
+        List<RestaurantResource> items,
         int page,
         int size,
         long totalElements,
