@@ -5,11 +5,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import se.edugrade.java25.restaurant.dto.BookingResponse;
-import se.edugrade.java25.restaurant.entity.Booking;
-import se.edugrade.java25.restaurant.entity.Restaurant;
-import se.edugrade.java25.restaurant.exception.RestaurantNotFoundException;
+import se.edugrade.java25.restaurant.model.Restaurant;
 import se.edugrade.java25.restaurant.repository.RestaurantRepository;
+
+import java.util.Optional;
 
 // Business logic lives here, not in the controller. The controller only
 // maps DTOs and delegates.
@@ -33,8 +32,8 @@ public class RestaurantService {
         return restaurantRepository.findAll(pageable);
     }
 
-    public Restaurant findById(Long id) {
-        return restaurantRepository.findById(id)
-                .orElseThrow(() -> new RestaurantNotFoundException(id));
+    //Tillfällig metod - GÖR OM
+    public Optional<Restaurant> findById(Long id) {
+        return restaurantRepository.findById(id);
     }
 }
