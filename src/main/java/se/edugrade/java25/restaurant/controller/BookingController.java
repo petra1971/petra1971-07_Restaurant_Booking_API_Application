@@ -1,17 +1,25 @@
 package se.edugrade.java25.restaurant.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import se.edugrade.java25.restaurant.dto.CreateBookingRequest;
-import se.edugrade.java25.restaurant.dto.BookingResource;
-import se.edugrade.java25.restaurant.dto.OffsetBookingPage;
+import se.edugrade.java25.restaurant.dto.*;
+import se.edugrade.java25.restaurant.model.Booking;
+import se.edugrade.java25.restaurant.model.Restaurant;
 import se.edugrade.java25.restaurant.service.BookingService;
 import se.edugrade.java25.restaurant.service.IdempotencyService;
+import se.edugrade.java25.restaurant.utils.BookingETags;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.Optional;
 
 @RestController
@@ -20,6 +28,15 @@ public class BookingController {
 
     private static final String JSON = MediaType.APPLICATION_JSON_VALUE;
     private static final String XML = MediaType.APPLICATION_ATOM_XML_VALUE;
+
+    private static final int MAX_PAGE_SIZE = 100;
+
+    /**
+     * {@code private} private cache. {@code max-age=3} for five minutes
+     * the client reuses its copy without sending a request at all.</p>
+     */
+    private static final CacheControl BOOKING_POLICY =
+            CacheControl.maxAge(Duration.ofMinutes(3)).cachePrivate();
 
     private final BookingService bookingService;
     private final IdempotencyService idempotencyService;
@@ -37,14 +54,43 @@ public class BookingController {
     @GetMapping(produces = {JSON, XML})
     public ResponseEntity<OffsetBookingPage> allBookings(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size) {
+            @RequestParam(defaultValue = "10") int size) {
 
-        return ResponseEntity.ok(bookingService.findAll(page, size));
+        return ResponseEntity.ok(offsetPage(page, clamp(size)));
+    }
+
+    private OffsetBookingPage offsetPage(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Booking> result = bookingService.findAll(pageable);
+
+        return new OffsetBookingPage(
+                result.getContent().stream().map(BookingResource::from).toList(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages());
+    }
+
+    //Ta requested men se till att värdet inte kan bli mindre än ett minsta värde eller större än ett största värde.
+    private static int clamp(int requested) {
+        return  Math.min(Math.max(requested, 1), MAX_PAGE_SIZE);
     }
 
     @GetMapping(path = "/{id}", produces = {JSON, XML})
-    public BookingResource bookingsById(@PathVariable @Valid Long id) {
-        return bookingService.findById(id);
+    public ResponseEntity<BookingResource> oneBooking(@PathVariable @Valid Long id,
+                                                        WebRequest request,
+                                                        HttpServletResponse response) {
+        Booking booking = bookingService.findById(id);
+        String tag = BookingETags.of(booking);
+
+        response.setHeader("Cache-Control", BOOKING_POLICY.getHeaderValue());
+
+        if (request.checkNotModified(tag)) {
+            // Spring has already written 304 with the ETag. A 304 has no body,
+            // and returning one would be ignored at best.
+            return null;
+        }
+        return ResponseEntity.ok().eTag(tag).body(BookingResource.from(booking));
     }
 
     /**

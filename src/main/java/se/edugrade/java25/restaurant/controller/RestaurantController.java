@@ -1,15 +1,29 @@
 package se.edugrade.java25.restaurant.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ETag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.config.Task;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import se.edugrade.java25.restaurant.config.ApiVersioningConfig;
 import se.edugrade.java25.restaurant.dto.*;
+import se.edugrade.java25.restaurant.model.Restaurant;
 import se.edugrade.java25.restaurant.service.IdempotencyService;
 import se.edugrade.java25.restaurant.service.RestaurantService;
+import se.edugrade.java25.restaurant.utils.BookingETags;
+import se.edugrade.java25.restaurant.utils.RestaurantETags;
 
 import java.net.URI;
+import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -19,6 +33,22 @@ public class RestaurantController {
     private static final String JSON = MediaType.APPLICATION_JSON_VALUE;
     private static final String XML = MediaType.APPLICATION_ATOM_XML_VALUE;
 
+    private static final int MAX_PAGE_SIZE = 100;
+
+    /**
+     * {@code public} Restaurant details are the same for everyone, so a shared cache may hold
+     * one copy and serve everyone from it. {@code max-age=5} for
+     * five minutes the client reuses its copy without sending a request at all.</p>
+     */
+    private static final CacheControl RESTAURANT_POLICY =
+            CacheControl.maxAge(Duration.ofMinutes(5)).cachePublic();
+
+    /**
+     * VARY = "Accept, X-API-Version". Headern som anges i Vary måste tas hänsyn till av cachen både när den sparar
+     * resultatet och när den avgör vilken sparad variant som ska returneras i svaret.
+     */
+    private static final String VARY = "Accept, " + ApiVersioningConfig.VERSION_HEADER;
+
     private final RestaurantService restaurantService;
     private final IdempotencyService idempotencyService;
 
@@ -26,22 +56,60 @@ public class RestaurantController {
         this.restaurantService = restaurantService;
         this.idempotencyService = idempotencyService;
     }
-    
+
     /**
      * Offset pagination:
      * page =  sida, size = hur många poster per sida
      */
     @GetMapping(produces = {JSON, XML})
-    public ResponseEntity<OffsetRestaurantPage> allRestaurants(
+    public ResponseEntity<Object> allRestaurants(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
 
-        return ResponseEntity.ok(restaurantService.findAll(page, size));
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Restaurant> result = restaurantService.findAll(pageable);
+
+        return ResponseEntity.ok(offsetPage(page, clamp(size)));
     }
 
-    @GetMapping(path = "/{id}", produces = {JSON, XML})
-    public RestaurantResource restaurantsById(@PathVariable @Valid Long id) {
-        return restaurantService.findById(id);
+    private OffsetRestaurantPage offsetPage(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Restaurant> result = restaurantService.findAll(pageable);
+
+        return new OffsetRestaurantPage(
+                result.getContent().stream().map(RestaurantResource::from).toList(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages());
+    }
+
+    //Ta requested men se till att värdet inte kan bli mindre än ett minsta värde eller större än ett största värde.
+    private static int clamp(int requested) {
+        return  Math.min(Math.max(requested, 1), MAX_PAGE_SIZE);
+    }
+
+    /**
+     * Vary, CacheControl och ETag för hantering av cachen).
+     * I detta fall beror cachen på API-versionen
+     */
+    @GetMapping(path = "/{id}", version = "1", produces = {JSON, XML})
+    public ResponseEntity<RestaurantResource> oneRestaurant_V1(
+            @PathVariable @Valid Long id,
+            WebRequest request,
+            HttpServletResponse response) {
+        var restaurant = restaurantService.findById(id);
+        String tag = RestaurantETags.of(restaurant);
+
+        response.setHeader("Vary", VARY);
+        response.setHeader("Cache-Control", RESTAURANT_POLICY.getHeaderValue());
+
+        if (request.checkNotModified(tag)) {
+            // Spring has already written 304 with the ETag. A 304 has no body,
+            // and returning one would be ignored at best.
+            return null;
+        }
+        return ResponseEntity.ok().eTag(tag).body(RestaurantResource.from(restaurant));
     }
 
     /**
