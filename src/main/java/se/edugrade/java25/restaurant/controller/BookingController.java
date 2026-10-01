@@ -5,22 +5,26 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.hateoas.*;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import se.edugrade.java25.restaurant.assembler.BookingAssembler;
 import se.edugrade.java25.restaurant.dto.*;
 import se.edugrade.java25.restaurant.model.Booking;
-import se.edugrade.java25.restaurant.model.Restaurant;
 import se.edugrade.java25.restaurant.service.BookingService;
 import se.edugrade.java25.restaurant.service.IdempotencyService;
 import se.edugrade.java25.restaurant.utils.BookingETags;
 
 import java.net.URI;
 import java.time.Duration;
-import java.util.Optional;
+import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping("/bookings")
@@ -32,6 +36,14 @@ public class BookingController {
     private static final int MAX_PAGE_SIZE = 100;
 
     /**
+     * Adding spring-boot-starter-hateoas makes
+     * application/json render as HAL, but it does not add the HAL media type
+     * to a handler's produces list - so a client that asks for the media type
+     * by name would get 406 from an endpoint that serves HAL to everyone else.
+     */
+    private static final String HAL = MediaTypes.HAL_JSON_VALUE;
+
+    /**
      * {@code private} private cache. {@code max-age=3} for five minutes
      * the client reuses its copy without sending a request at all.</p>
      */
@@ -40,35 +52,66 @@ public class BookingController {
 
     private final BookingService bookingService;
     private final IdempotencyService idempotencyService;
+    private final BookingAssembler assembler;
 
     public BookingController(BookingService bookingService,
-                             IdempotencyService idempotencyService) {
+                             IdempotencyService idempotencyService, BookingAssembler assembler) {
         this.bookingService = bookingService;
         this.idempotencyService = idempotencyService;
+        this.assembler = assembler;
     }
 
     /**
      * Offset pagination:
      * page =  sida, size = hur många poster per sida
      */
-    @GetMapping(produces = {JSON, XML})
-    public ResponseEntity<OffsetBookingPage> allBookings(
+    @GetMapping(produces = {JSON, HAL, XML})
+    public ResponseEntity<Object> allBookings(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         return ResponseEntity.ok(offsetPage(page, clamp(size)));
     }
 
-    private OffsetBookingPage offsetPage(int page, int size) {
+    private PagedModel<EntityModel<BookingResource>> offsetPage(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Booking> result = bookingService.findAll(pageable);
 
-        return new OffsetBookingPage(
-                result.getContent().stream().map(BookingResource::from).toList(),
-                result.getNumber(),
+        List<EntityModel<BookingResource>> items = result.getContent().stream()
+                .map(assembler::toModel)
+                .toList();
+
+        var metadata = new PagedModel.PageMetadata(
                 result.getSize(),
+                result.getNumber(),
                 result.getTotalElements(),
-                result.getTotalPages());
+                result.getTotalPages()
+        );
+
+        PagedModel<EntityModel<BookingResource>> model = PagedModel.of(items, metadata);
+
+        model.add(pageLink(
+                page, size, IanaLinkRelations.SELF));
+
+        model.add(pageLink(
+                0, size, IanaLinkRelations.FIRST));
+
+        if (result.getTotalPages() > 0) {
+            model.add(pageLink(
+                    result.getTotalPages() -1, size, IanaLinkRelations.LAST));
+        }
+
+        if (result.hasPrevious()) {
+            model.add(pageLink(
+                    page -1, size, IanaLinkRelations.PREV));
+        }
+
+        if (result.hasNext()) {
+            model.add(pageLink(
+                    page + 1, size, IanaLinkRelations.NEXT));
+        }
+
+        return model;
     }
 
     //Ta requested men se till att värdet inte kan bli mindre än ett minsta värde eller större än ett största värde.
@@ -76,10 +119,15 @@ public class BookingController {
         return  Math.min(Math.max(requested, 1), MAX_PAGE_SIZE);
     }
 
+    private Link pageLink(int page, int size, LinkRelation relation) {
+        return linkTo(methodOn(BookingController.class).allBookings(page, size))
+                .withRel(relation);
+    }
+
     @GetMapping(path = "/{id}", produces = {JSON, XML})
-    public ResponseEntity<BookingResource> oneBooking(@PathVariable @Valid Long id,
-                                                        WebRequest request,
-                                                        HttpServletResponse response) {
+    public ResponseEntity<BookingResource> oneById(@PathVariable @Valid Long id,
+                                                   WebRequest request,
+                                                   HttpServletResponse response) {
         Booking booking = bookingService.findById(id);
         String tag = BookingETags.of(booking);
 

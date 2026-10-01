@@ -78,6 +78,16 @@
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- EntityModel, CollectionModel, PagedModel, WebMvcLinkBuilder and the
+     HAL renderer. Adding it changes the default JSON media type for
+     representation models to application/hal+json - see
+     spring.hateoas.use-hal-as-default-json-media-type in
+     application.properties. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-hateoas</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
