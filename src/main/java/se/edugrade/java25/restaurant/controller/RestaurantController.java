@@ -6,10 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.CacheControl;
-import org.springframework.http.ETag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.config.Task;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -18,13 +16,10 @@ import se.edugrade.java25.restaurant.dto.*;
 import se.edugrade.java25.restaurant.model.Restaurant;
 import se.edugrade.java25.restaurant.service.IdempotencyService;
 import se.edugrade.java25.restaurant.service.RestaurantService;
-import se.edugrade.java25.restaurant.utils.BookingETags;
 import se.edugrade.java25.restaurant.utils.RestaurantETags;
 
 import java.net.URI;
 import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/restaurants")
@@ -94,7 +89,7 @@ public class RestaurantController {
      * I detta fall beror cachen på API-versionen
      */
     @GetMapping(path = "/{id}", version = "1", produces = {JSON, XML})
-    public ResponseEntity<RestaurantResource> oneRestaurant_V1(
+    public ResponseEntity<RestaurantResource> oneById_V1(
             @PathVariable @Valid Long id,
             WebRequest request,
             HttpServletResponse response) {
