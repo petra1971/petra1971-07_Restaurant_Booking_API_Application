@@ -1,11 +1,9 @@
 package se.edugrade.java25.restaurant.exception;
 
-import org.springframework.beans.factory.parsing.Problem;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import se.edugrade.java25.restaurant.controller.IdempotencyGuard;
 
 import java.net.URI;
 

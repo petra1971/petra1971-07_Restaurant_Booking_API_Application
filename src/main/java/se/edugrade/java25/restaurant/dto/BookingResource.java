@@ -7,10 +7,10 @@ import java.time.LocalDateTime;
 
 public record BookingResource(
         Long id,
-        String bookersName,
+        String guestName,
         String email,
         LocalDateTime arrivalTime,
-        int bookingSize,
+        int partySize,
         BookingStatus status,
         Long restaurantId
 ) {

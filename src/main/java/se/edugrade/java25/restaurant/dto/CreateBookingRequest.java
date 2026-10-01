@@ -11,7 +11,7 @@ public record CreateBookingRequest(
         @NotNull Long restaurantId,
         @NotBlank String guestName,
         @NotBlank @Email String guestEmail,
-        @NotBlank LocalDateTime arrivalTime,
+        @NotNull LocalDateTime arrivalTime,
         @NotNull int partySize
         ) {
 

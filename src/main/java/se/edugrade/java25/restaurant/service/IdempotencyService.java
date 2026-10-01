@@ -2,7 +2,6 @@ package se.edugrade.java25.restaurant.service;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import se.edugrade.java25.restaurant.controller.IdempotencyGuard;
 
 import java.util.Optional;
 import java.util.function.Supplier;

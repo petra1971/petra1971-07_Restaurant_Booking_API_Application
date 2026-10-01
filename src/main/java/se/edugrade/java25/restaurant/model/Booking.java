@@ -20,6 +20,7 @@ public class Booking {
     private int partySize;
     private Instant updatedAt;
 
+
     @ManyToOne
     @JsonIgnore // Booking - barnsidan, serialiseras INTE. Förhindrar cirkulära refrenser
     @JoinColumn(name = "restaurant_id")
@@ -27,6 +28,7 @@ public class Booking {
 
     @Enumerated(EnumType.STRING)
     private BookingStatus status;
+    private int revision;
 
     // JPA requires a no-arg constructor.
     protected Booking() { }
@@ -39,6 +41,7 @@ public class Booking {
         this.updatedAt = Instant.now();
         this.restaurant = restaurant;
         this.status = BookingStatus.REQUESTED;
+        this.revision = 1;
     }
 
     public Long getId() {
@@ -75,6 +78,10 @@ public class Booking {
 
     public BookingStatus getStatus() {
         return status;
+    }
+
+    public int getRevision() {
+        return revision;
     }
 
     public void applyUpdate(String bookersName, String email, LocalDateTime arrivalTime, int seats) {

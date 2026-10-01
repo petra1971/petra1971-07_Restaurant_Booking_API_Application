@@ -14,6 +14,7 @@ public class Restaurant {
     private String cuisine;
     private String city;
     private int seats;
+    private int revision;
 
     // Restaurant - föräldrasidan, serialiseras normalt
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -27,6 +28,7 @@ public class Restaurant {
         this.cuisine = cuisine;
         this.city = city;
         this.seats = seats;
+        this.revision = 1;
     }
 
     public Long getId() {
@@ -47,5 +49,9 @@ public class Restaurant {
 
     public int getSeats() {
         return seats;
+    }
+
+    public int getRevision() {
+        return revision;
     }
 }

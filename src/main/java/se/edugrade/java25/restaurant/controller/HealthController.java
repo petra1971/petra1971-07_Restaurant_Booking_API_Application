@@ -19,6 +19,10 @@ public class HealthController {
 
     public record Health(String status, String service) {}
 
+    public HealthController() {
+        System.out.println(">>> AliveController CREATED");
+    }
+
     @GetMapping("/health")
     public Health health() {
         return new Health("UP", "restaurant-api");

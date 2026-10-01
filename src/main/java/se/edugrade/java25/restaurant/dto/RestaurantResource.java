@@ -7,8 +7,8 @@ public record RestaurantResource(
         String name,
         String cuisine,
         String city,
-        int seats
-) {
+        int seats) {
+
     public static RestaurantResource from(Restaurant restaurant) {
         return new RestaurantResource(
                 restaurant.getId(),
