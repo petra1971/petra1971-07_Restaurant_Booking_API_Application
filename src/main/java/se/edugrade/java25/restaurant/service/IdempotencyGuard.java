@@ -1,4 +1,4 @@
-package se.edugrade.java25.restaurant.controller;
+package se.edugrade.java25.restaurant.service;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
