@@ -9,7 +9,6 @@ import org.springframework.hateoas.*;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.config.Task;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -17,7 +16,7 @@ import se.edugrade.java25.restaurant.assembler.BookingModelAssembler;
 import se.edugrade.java25.restaurant.dto.*;
 import se.edugrade.java25.restaurant.model.Booking;
 import se.edugrade.java25.restaurant.service.BookingService;
-import se.edugrade.java25.restaurant.service.idempotencyGuard;
+import se.edugrade.java25.restaurant.service.IdempotencyGuard;
 import se.edugrade.java25.restaurant.utils.BookingETags;
 
 import java.net.URI;
@@ -53,11 +52,11 @@ public class BookingController {
             CacheControl.maxAge(Duration.ofMinutes(3)).cachePrivate();
 
     private final BookingService bookingService;
-    private final idempotencyGuard idempotency;
+    private final IdempotencyGuard idempotency;
     private final BookingModelAssembler assembler;
 
     public BookingController(BookingService bookingService,
-                             idempotencyGuard idempotency, BookingModelAssembler assembler) {
+                             IdempotencyGuard idempotency, BookingModelAssembler assembler) {
         this.bookingService = bookingService;
         this.idempotency = idempotency;
         this.assembler = assembler;
@@ -160,7 +159,7 @@ public class BookingController {
         // The check happens BEFORE the create logic runs. Checking afterwards
         // would mean the duplicate already exists by the time we notice.
         Optional<ResponseEntity<Object>> replay =
-                idempotency.claim(idempotencyKey, se.edugrade.java25.restaurant.service.idempotencyGuard.hash(body));
+                idempotency.claim(idempotencyKey, IdempotencyGuard.hash(body));
         if (replay.isPresent()) {
             return replay.get();
         }
