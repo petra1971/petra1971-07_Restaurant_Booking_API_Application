@@ -28,7 +28,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
  * compiling instead, which is the entire point.</p>
  */
 @Component
-public class BookingAssembler implements RepresentationModelAssembler<Booking, EntityModel<BookingResource>> {
+public class BookingModelAssembler implements RepresentationModelAssembler<Booking, EntityModel<BookingResource>> {
 
     @Override
     public EntityModel<BookingResource> toModel(Booking booking) {
