@@ -89,7 +89,7 @@ public class Booking {
         this.guestEmail = email;
         this.arrivalTime = arrivalTime;
         this.partySize = seats;
-        touch();
+        updateTime();
     }
 
     public boolean canConfirm() {
@@ -128,10 +128,10 @@ public class Booking {
 
     private void transitionTo(BookingStatus targetStatus) {
         this.status = targetStatus;
-        touch();
+        updateTime();
     }
 
-    private void touch() {
+    private void updateTime() {
         this.updatedAt = Instant.now();
     }
 }

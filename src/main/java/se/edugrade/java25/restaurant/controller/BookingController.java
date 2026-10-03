@@ -9,19 +9,21 @@ import org.springframework.hateoas.*;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.config.Task;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import se.edugrade.java25.restaurant.assembler.BookingAssembler;
+import se.edugrade.java25.restaurant.assembler.BookingModelAssembler;
 import se.edugrade.java25.restaurant.dto.*;
 import se.edugrade.java25.restaurant.model.Booking;
 import se.edugrade.java25.restaurant.service.BookingService;
-import se.edugrade.java25.restaurant.service.IdempotencyService;
+import se.edugrade.java25.restaurant.service.idempotencyGuard;
 import se.edugrade.java25.restaurant.utils.BookingETags;
 
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
@@ -51,13 +53,13 @@ public class BookingController {
             CacheControl.maxAge(Duration.ofMinutes(3)).cachePrivate();
 
     private final BookingService bookingService;
-    private final IdempotencyService idempotencyService;
-    private final BookingAssembler assembler;
+    private final idempotencyGuard idempotency;
+    private final BookingModelAssembler assembler;
 
     public BookingController(BookingService bookingService,
-                             IdempotencyService idempotencyService, BookingAssembler assembler) {
+                             idempotencyGuard idempotency, BookingModelAssembler assembler) {
         this.bookingService = bookingService;
-        this.idempotencyService = idempotencyService;
+        this.idempotency = idempotency;
         this.assembler = assembler;
     }
 
@@ -124,8 +126,8 @@ public class BookingController {
                 .withRel(relation);
     }
 
-    @GetMapping(path = "/{id}", produces = {JSON, XML})
-    public ResponseEntity<BookingResource> oneById(@PathVariable @Valid Long id,
+    @GetMapping(path = "/{id}", produces = {JSON, HAL, XML})
+    public ResponseEntity<EntityModel<BookingResource>> oneById(@PathVariable Long id,
                                                    WebRequest request,
                                                    HttpServletResponse response) {
         Booking booking = bookingService.findById(id);
@@ -138,7 +140,7 @@ public class BookingController {
             // and returning one would be ignored at best.
             return null;
         }
-        return ResponseEntity.ok().eTag(tag).body(BookingResource.from(booking));
+        return ResponseEntity.ok().eTag(tag).body(assembler.toModel(booking));
     }
 
     /**
@@ -146,41 +148,54 @@ public class BookingController {
      * The header is optional here: a client that does not send one gets the
      * plain POST semantics it asked for, duplicates included.
      */
-    @PostMapping(consumes = JSON, produces = {JSON, XML})
+    @PostMapping(consumes = JSON, produces = {JSON, HAL, XML})
     public ResponseEntity<Object> create(
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
-            @RequestBody @Valid CreateBookingRequest body) {
+            @Valid @RequestBody CreateBookingRequest body) {
 
-        // Pga DRY har jag brutit ut koden för create till en idempotencyService eftersom den fanns i båda entiteterna
-        return idempotencyService.createWithIdempotency(
-                idempotencyKey,
-                body,
-                () -> doCreate(body)
-        );
+        if (idempotencyKey == null) {
+            return doCreate(body);
+        }
+
+        // The check happens BEFORE the create logic runs. Checking afterwards
+        // would mean the duplicate already exists by the time we notice.
+        Optional<ResponseEntity<Object>> replay =
+                idempotency.claim(idempotencyKey, se.edugrade.java25.restaurant.service.idempotencyGuard.hash(body));
+        if (replay.isPresent()) {
+            return replay.get();
+        }
+
+        ResponseEntity<Object> created = doCreate(body);
+        idempotency.store(idempotencyKey, created.getStatusCode().value(),
+                created.getHeaders().getFirst("Location"), created.getBody());
+        return created;
     }
 
     private ResponseEntity<Object> doCreate(CreateBookingRequest body) {
-        BookingResource saved = bookingService.create(body);
+        Booking saved = bookingService.create(body);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .replaceQuery(null)                 //Tar bort eventuella query-parametrar.
-                .path("/{id}")                      //Utgår från URL:en för den aktuella HTTP-requesten och lägger till /{id}
-                .buildAndExpand(saved.id())         //Ersätter {id} med ID:t från det sparade objektet
-                .toUri();                           //Gör den färdiga URL:en till ett Java URI-objekt
-        return ResponseEntity.created(location).body(saved); // Returnerar ett HTTP-svar med: HTTP/1.1 201 Created, location: /api/tasks/42 samt body
+                .replaceQuery(null)                                 //Tar bort eventuella query-parametrar.
+                .path("/{id}")                                      //Utgår från URL:en för den aktuella HTTP-requesten och lägger till /{id}
+                .buildAndExpand(saved.getId())                         //Ersätter {id} med ID:t från det sparade objektet
+                .toUri();                                           //Gör den färdiga URL:en till ett Java URI-objekt
+        return ResponseEntity.created(location).body(saved);        // Returnerar ett HTTP-svar med: HTTP/1.1 201 Created, location: /api/tasks/42 samt body
     }
 
-    @PostMapping(path = "/{id}/confirm", produces = {JSON, XML})
-    public BookingResource confirm(@PathVariable Long id) {
-        return bookingService.confirm(id);
+    @PostMapping(path = "/{id}/confirm", produces = {JSON, HAL, XML})
+    public EntityModel<BookingResource> confirm(@PathVariable Long id) {
+        Booking booking = bookingService.confirm(id);
+        return assembler.toModel(booking);
     }
 
-    @PostMapping(path = "/{id}/seat", produces = {JSON, XML})
-    public BookingResource seat(@PathVariable Long id) {
-        return bookingService.seat(id);
+    @PostMapping(path = "/{id}/seat", produces = {JSON, HAL, XML})
+    public EntityModel<BookingResource> seat(@PathVariable Long id) {
+        Booking booking = bookingService.seat(id);
+        return assembler.toModel(booking);
     }
 
-    @PostMapping(path = "/{id}/cancel", produces = {JSON, XML})
-    public BookingResource cancel(@PathVariable Long id) {
-        return bookingService.cancel(id);
+    @PostMapping(path = "/{id}/cancel", produces = {JSON, HAL, XML})
+    public EntityModel<BookingResource> cancel(@PathVariable Long id) {
+        Booking booking = bookingService.cancel(id);
+        return assembler.toModel(booking);
     }
 }

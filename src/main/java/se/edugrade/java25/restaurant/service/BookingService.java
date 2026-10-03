@@ -4,9 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import se.edugrade.java25.restaurant.dto.BookingResource;
 import se.edugrade.java25.restaurant.dto.CreateBookingRequest;
-import se.edugrade.java25.restaurant.dto.OffsetBookingPage;
 import se.edugrade.java25.restaurant.exception.BookingNotFoundException;
 import se.edugrade.java25.restaurant.exception.RestaurantNotFoundException;
 import se.edugrade.java25.restaurant.model.Booking;
@@ -29,11 +27,10 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResource create(CreateBookingRequest request) {
+    public Booking create(CreateBookingRequest request) {
         Restaurant restaurant = getRestaurantByIdOrThrow(request.restaurantId());
         Booking booking = CreateBookingRequest.toBooking(request, restaurant);
-        Booking saved = bookingRepository.save(booking);
-        return BookingResource.from(saved);
+        return bookingRepository.save(booking);
     }
 
     public Page<Booking> findAll(Pageable pageable) {
@@ -50,25 +47,26 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResource confirm(Long id) {
+    public Booking confirm(Long id) {
         Booking booking = getBookingByIdOrThrow(id);
         booking.confirm();
-        return BookingResource.from(bookingRepository.save(booking));
+        return bookingRepository.save(booking);
     }
 
     @Transactional
-    public BookingResource seat(Long id) {
+    public Booking seat(Long id) {
         Booking booking = getBookingByIdOrThrow(id);
         booking.seat();
-        return BookingResource.from(bookingRepository.save(booking));
+        return bookingRepository.save(booking);
     }
 
     @Transactional
-    public BookingResource cancel(Long id) {
+    public Booking cancel(Long id) {
         Booking booking = getBookingByIdOrThrow(id);
         booking.cancel();
-        return BookingResource.from(bookingRepository.save(booking));
+        return bookingRepository.save(booking);
     }
+
 
     private Booking getBookingByIdOrThrow(Long id) {
         return bookingRepository.findById(id)
