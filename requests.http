@@ -32,67 +32,86 @@ Accept: application/json
 ### Ta bort kommentarstecknen när du byggt respektive endpoint.
 ### ---------------------------------------------------------------------
 
-### 2. Lista restauranger. Paginerat.
-# GET {{host}}/restaurants?page=0&size=10
-# Accept: application/json
+## 2a. Lista restauranger. Offset-paginerat.
+GET {{host}}/restaurants?page=0&size=2
+Accept: application/json
 
-### 3. Skapa en bokning. Ska ge 201 och en Location-header.
+### 2b. Offset. Lista bokningar. Offset-paginerat
+GET {{host}}/bookings?page=0&size=10
+Accept: application/json
+
+### 3a. Skapa en restaurant. Ska ge 201 och en Location-header.
 ### Titta på svarets headers, inte bara på body.
-# POST {{host}}/bookings
-# Content-Type: application/json
-#
-# {
-#   "restaurantId": 1,
-#   "guestName": "Alice Andersson",
-#   "guestEmail": "alice"@"example.com",
-#   "arrivalTime": "2026-10-20T19:00:00",
-#   "partySize": 4
-# }
+POST {{host}}/restaurants
+Content-Type: application/json
+Accept: application/json
+Idempotency-Key: demo-key-1
+
+{
+  "name": "Tre indier",
+  "cuisine" : "Indiskt",
+  "city": "Göteborg",
+  "seats": "50"
+}
+
+### 3b. Skapa en bokning. Ska ge 201 och en Location-header. 422 om key är använd med annan body
+### Titta på svarets headers, inte bara på body.
+POST {{host}}/bookings
+Content-Type: application/json
+Accept: application/json
+Idempotency-Key: demo-key-2
+
+{
+  "restaurantId": 7,
+  "guestName": "Alice Andersson",
+  "guestEmail": "alice@example.com",
+  "arrivalTime": "2026-10-20T19:00:00",
+  "partySize": 4
+}
 
 ### 4. Hämta bokningen. Leta efter länkarna i svaret: en bokning i
 ### REQUESTED ska erbjuda både bekräfta och avboka.
-# GET {{host}}/bookings/1
-# Accept: application/json
+GET {{host}}/bookings/2
+Accept: application/json
 
 ### 5. En bokning som inte finns. Ska ge 404 som application/problem+json.
 ### Får du tom body har du glömt spring.mvc.problemdetails.enabled.
-# GET {{host}}/bookings/999999
-# Accept: application/json
+GET {{host}}/bookings/999999
+Accept: application/json
 
 ### 6. Villkorad hämtning. Kopiera ETag-värdet från svaret på anrop 4
 ### och klistra in det nedan. Ska ge 304 och tom body.
-# GET {{host}}/bookings/1
-# If-None-Match: "klistra-in-etag-har"
+GET {{host}}/bookings/3
+If-None-Match: "booking-1-r1"
 
 ### 7. En otillåten tillståndsövergång. Avboka först, försök sedan
 ### bekräfta samma bokning. Ska ge 409.
-# POST {{host}}/bookings/1/cancel
+#POST {{host}}/bookings/1/cancel
 ###
-# POST {{host}}/bookings/1/confirm
-
+POST {{host}}/bookings/1/confirm
 
 ### ---------------------------------------------------------------------
 ### Del 3: Säkerhet
 ### ---------------------------------------------------------------------
 
 ### 8. Utan token. Ska ge 401, inte 403.
-# GET {{host}}/bookings
-# Accept: application/json
+GET {{host}}/bookings
+Accept: application/json
 
 ### 9. Med token. Hämta en riktig token från din authorization server och
 ### klistra in den. Ska ge 200.
-# GET {{host}}/bookings
-# Accept: application/json
-# Authorization: Bearer klistra-in-token-har
+GET {{host}}/bookings
+Accept: application/json
+Authorization: Bearer klistra-in-token-har
 
 ### 10. Rätt inloggad, fel behörighet. En gäst som försöker bekräfta
 ### en bokning ska få 403, inte 401.
-# POST {{host}}/bookings/1/confirm
-# Authorization: Bearer klistra-in-gast-token-har
+POST {{host}}/bookings/1/confirm
+Authorization: Bearer klistra-in-gast-token-har
 
 ### 11. CORS-preflight från din frontend. Svaret ska innehålla
 ### Access-Control-Allow-Origin. Gör det inte det är CORS fel konfigurerat.
-# OPTIONS {{host}}/bookings
-# Origin: http://localhost:5173
-# Access-Control-Request-Method: POST
-# Access-Control-Request-Headers: content-type,authorization
+OPTIONS {{host}}/bookings
+Origin: http://localhost:5173
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: content-type,authorization
