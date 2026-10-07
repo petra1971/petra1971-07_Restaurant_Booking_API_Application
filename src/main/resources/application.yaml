@@ -1,11 +1,11 @@
-spring:
-  application:
-    name: restaurant-api
-
 # Most hosting platforms hand you the port in an environment variable.
 # Falls back to 8080 when you run it locally.
 server:
   port: ${PORT:8080}
+
+spring:
+  application:
+    name: restaurant-api
 
   # In-memory H2, thrown away when the JVM stops. A fresh run always starts
   # from the same 5 seeded tasks.
@@ -23,3 +23,10 @@ server:
     # RFC 9457 problem+json document instead.
     problemdetails:
       enabled: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/restaurant-api
+
