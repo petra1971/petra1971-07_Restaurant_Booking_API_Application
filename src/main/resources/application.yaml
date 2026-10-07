@@ -28,6 +28,5 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          ${JWT_ISSUER_URI:http://localhost:8180/realms/restaurant-api} # använder railways variable JWT_ISSUER_URI i första hand, url:en i andra
-
+          ${JWT_ISSUER_URI:http://localhost:8180/realms/restaurant-api}
 
