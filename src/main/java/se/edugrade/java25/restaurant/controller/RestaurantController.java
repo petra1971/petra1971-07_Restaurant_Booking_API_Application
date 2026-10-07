@@ -128,10 +128,10 @@ public class RestaurantController {
     private ResponseEntity<Object> doCreate(RestaurantRequest body) {
         RestaurantResource saved = restaurantService.create(body);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .replaceQuery(null)                 //Tar bort eventuella query-parametrar.
-                .path("/{id}")                      //Utgår från URL:en för den aktuella HTTP-requesten och lägger till /{id}
-                .buildAndExpand(saved.id())         //Ersätter {id} med ID:t från det sparade objektet
-                .toUri();                           //Gör den färdiga URL:en till ett Java URI-objekt
+                .replaceQuery(null)                         //Tar bort eventuella query-parametrar.
+                .path("/{id}")                              //Utgår från URL:en för den aktuella HTTP-requesten och lägger till /{id}
+                .buildAndExpand(saved.id())                 //Ersätter {id} med ID:t från det sparade objektet
+                .toUri();                                   //Gör den färdiga URL:en till ett Java URI-objekt
         return ResponseEntity.created(location).body(saved); // Returnerar ett HTTP-svar med: HTTP/1.1 201 Created, location: /api/tasks/42 samt body
     }
 }
