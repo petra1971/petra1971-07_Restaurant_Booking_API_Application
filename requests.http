@@ -7,7 +7,11 @@
 ### Fyll på filen allt eftersom du bygger. Den är din snabbaste väg att se
 ### vad API:et faktiskt svarar, och den blir din demo på redovisningen.
 
-@host = http://localhost:8080
+# Köra lokalt
+# @host = http://localhost:8080
+
+# Köra på railway :
+@host = https://07javawebservicesassignment1restaurantapi-production.up.railway.app
 
 ### Byt till din driftsatta tjänst inför redovisningen genom att
 ### kommentera bort raden ovan och ta fram den här i stället.
