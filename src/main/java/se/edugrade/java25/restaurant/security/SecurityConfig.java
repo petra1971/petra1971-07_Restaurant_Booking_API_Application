@@ -16,14 +16,90 @@ public class SecurityConfig {
 
     private final KeycloakJwtAuthenticationConverter jwtAuthenticationConverter;
 
-    public SecurityConfig(KeycloakJwtAuthenticationConverter keycloakJwtAuthenticationConverter) {
-        this.jwtAuthenticationConverter = keycloakJwtAuthenticationConverter; }
+    public SecurityConfig(KeycloakJwtAuthenticationConverter jwtAuthenticationConverter) {
+        this.jwtAuthenticationConverter = jwtAuthenticationConverter; }
+
+     /**
+     * With keycloak authorization server
+     */
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            // CORS ska hantera preflight-anrop innan authorization försöker
+            // kontrollera användaren. En preflight är bara webbläsarens fråga
+            // om CORS-regler och innehåller normalt ingen autentisering. Om en
+            // request senare nekas ska CORS-headers fortfarande finnas med, så att
+            // webbläsaren kan visa det riktiga felet, exempelvis 401 eller 403,
+            // istället för att det ser ut som ett CORS-fel.
+
+            // Nedan betyder: aktivera CORS och använd Spring Securitys normala sätt att konfigurera det"
+            .cors(Customizer.withDefaults())
+
+            // CSRF är avstängt eftersom ett stateless API som använder Bearer JWT
+            // normalt inte behöver CSRF-skydd.
+            .csrf(AbstractHttpConfigurer::disable)
+
+            .sessionManagement(session -> session
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/health")
+                    .permitAll()
+
+//              // Om authorization-servern i projektet används (authserver) behövs denna regel
+//                        .requestMatchers("/authorize", "/token")
+//                        .permitAll()
+
+                    .requestMatchers(
+                            "/swagger-ui/**",
+                            "/swagger-ui.html",
+                            "/v3/api-docs/**")
+                            .permitAll()
+
+                    .requestMatchers("/h2-console/**")
+                            .permitAll()
+
+                    .requestMatchers(HttpMethod.GET, "/bookings/**")
+                            .hasAnyRole("GUEST", "STAFF")
+
+                    .requestMatchers(HttpMethod.POST, "/bookings")
+                            .hasAnyRole("GUEST", "STAFF")
+
+                    .requestMatchers(HttpMethod.POST, "/bookings/{id}/confirm")
+//                            .permitAll() // Används för att testa utan token
+                    .hasRole("STAFF")
+
+                    .requestMatchers(HttpMethod.POST, "/bookings/{id}/seat")
+                            .hasRole("STAFF")
+
+                    .requestMatchers(HttpMethod.POST, "/bookings/{id}/cancel")
+                            .hasRole("STAFF")
+
+                    .requestMatchers(HttpMethod.POST, "/restaurants")
+                    .hasRole("ADMIN")
+
+                    .requestMatchers(HttpMethod.GET, "/restaurants/**")
+                            .hasRole("ADMIN")
+
+                    .anyRequest().authenticated()
+            )
+
+            .oauth2ResourceServer(oauth2 -> oauth2  // Den raden aktiverar JWT-autentisering, men skapar inte själv någon JwtDecoder, det gör
+                    .jwt(jwt -> jwt
+                            .jwtAuthenticationConverter(
+                                    jwtAuthenticationConverter
+                            )
+                    )
+            );
+
+        return http.build();
+    }
 
     /**
      * A stateless, bearer-token API. {@code SessionCreationPolicy.STATELESS}
      * means no session is ever created, so no session cookie exists for an
      * attacker's page to ride. Authentication comes from an Authorization
-     * header that only this application's own JavaScript ever sets - a
+     * header that only this application's own JavaScript sets - a
      * plain cross-site form submission cannot add a custom header. That is
      * what makes disabling CSRF here correct.
      *
@@ -56,82 +132,4 @@ public class SecurityConfig {
 //                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
 //        return http.build();
 //    }
-
-    /**
-     * With keycloak authorization server
-     */
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                // CORS ska hantera preflight-anrop innan authorization försöker
-                // kontrollera användaren. En preflight är bara webbläsarens fråga
-                // om CORS-regler och innehåller normalt ingen autentisering. Om en
-                // request senare nekas ska CORS-headers fortfarande finnas med, så att
-                // webbläsaren kan visa det riktiga felet, exempelvis 401 eller 403,
-                // istället för att det ser ut som ett CORS-fel.
-
-                // Nedan betyder: aktivera CORS och använd Spring Securitys normala sätt att konfigurera det"
-                .cors(Customizer.withDefaults())
-
-                // CSRF är avstängt eftersom ett stateless API som använder Bearer JWT
-                // normalt inte behöver CSRF-skydd.
-                .csrf(AbstractHttpConfigurer::disable)
-
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/health")
-                        .permitAll()
-
-//              // Om authorization-servern i projektet används (authserver) behövs denna regel
-//                        .requestMatchers("/authorize", "/token")
-//                        .permitAll()
-
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**"
-                        ).permitAll()
-
-                        .requestMatchers("/h2-console/**")
-                        .permitAll()
-
-                        .requestMatchers(HttpMethod.GET, "/bookings/**")
-                        .hasRole("GUEST")
-
-                        .requestMatchers(HttpMethod.POST, "/bookings")
-                        .hasRole("GUEST")
-
-                        .requestMatchers(HttpMethod.POST, "/bookings/{id}/confirm")
-                        .hasRole("STAFF")
-
-                        .requestMatchers(HttpMethod.POST, "/bookings/{id}/confirm")
-                        .hasRole("STAFF")
-
-                        .requestMatchers(HttpMethod.POST, "/bookings/{id}/seat")
-                        .hasRole("STAFF")
-
-                        .requestMatchers(HttpMethod.POST, "/bookings/{id}/cancel")
-                        .hasRole("STAFF")
-
-                        .requestMatchers(HttpMethod.POST, "/restaurants")
-                        .hasRole("ADMIN")
-
-                        .requestMatchers(HttpMethod.GET, "/restaurants/**")
-                        .hasRole("ADMIN")
-
-                        .anyRequest().authenticated()
-                )
-
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt
-                                .jwtAuthenticationConverter(
-                                        jwtAuthenticationConverter
-                                )
-                        )
-                );
-
-        return http.build();
-    }
 }
