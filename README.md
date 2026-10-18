@@ -9,7 +9,7 @@ och där finns även docker-compose med admin-konto/password för att logga in i
 För att starta keycloak-server:
 1. starta docker
 2. I tearminal cd C:\git\07_webservices_KeyCloak_Oauth2_OIDC 
-3. starta containern: compose up -d
+3. starta containern: docker compose up -d
 
 Nu kan man logga in i keycloak med admin-kontot (just nu admin/admin)
 Adressen är: localhost:8181
@@ -24,10 +24,12 @@ User och passwords när man går mot restaurant-api:t:
 guest/guest123
 staff/staff123
 admin/admin123
+Roller: GUEST, STAFF, ADMIN
 
 guest har access att boka och hämta bokningar
 staff kan hämta bokningar och ändra status på bokningar
-admin kan skapa restaurang och hämta restauranger
+admin kan skapa restaurang
+alla kan hämta restauranger
 
 När man kör med både RestaurantAPI-servern och Keycloak-servern på Railway
 Ska host i vara #@host = https://07javawebservicesassignment1restaurantapi-production.up.railway.app
@@ -38,9 +40,10 @@ token url: https://keycloak-production-75ba.up.railway.app/realms/restaurant-api
 redirect url: https://app.insomnia.rest/oauth/redirect
 
 User och passwords när man går mot restaurant-api:t:
-guest/guest123 - OBS Kontrollera! Går ändra i Keycloak inloggad som admin
-staff/staff123 - se ovan
-admin/admin123 - se ovan
+guest/guest - OBS Kontrollera! Går ändra i Keycloak inloggad som admin (admin/admin)
+staff/staff - se ovan
+admin/admin - se ovan
+Roller: GUEST, STAFF, ADMIN
 
 ## Lars introduktion till uppgiften
 
