@@ -1,8 +1,48 @@
-# Inlämningsuppgift: Java Web Services
+# Inlämningsuppgif
 
-Forka det här repot. Allt du behöver finns här.
+### Att köra projektet lokalt eller på Railway
 
-## Läs först
+Lokalt använder man en keycloak autentiserings-server i docker. 
+Det projektet finns i C:\git\07_webservices_KeyCloak_Oauth2_OIDC 
+och där finns även docker-compose med admin-konto/password för att logga in i keycloak lokalt
+
+För att starta keycloak-server:
+1. starta docker
+2. I tearminal cd C:\git\07_webservices_KeyCloak_Oauth2_OIDC 
+3. starta containern: compose up -d
+
+Nu kan man logga in i keycloak med admin-kontot (just nu admin/admin)
+Adressen är: localhost:8181
+
+När man kör lokalt ska host i requests.http vara @host = http://localhost:8080
+I Insomnia: 
+authorization url http://localhost:8180/realms/restaurant-api/protocol/openid-connect/auth
+token url: http://localhost:8180/realms/restaurant-api/protocol/openid-connect/token
+redirect url: https://app.insomnia.rest/oauth/redirect
+
+User och passwords när man går mot restaurant-api:t:
+guest/guest123
+staff/staff123
+admin/admin123
+
+guest har access att boka och hämta bokningar
+staff kan hämta bokningar och ändra status på bokningar
+admin kan skapa restaurang och hämta restauranger
+
+När man kör med både RestaurantAPI-servern och Keycloak-servern på Railway
+Ska host i vara #@host = https://07javawebservicesassignment1restaurantapi-production.up.railway.app
+
+I Insomnia:
+authorization url: https://keycloak-production-75ba.up.railway.app/realms/restaurant-api/protocol/openid-connect/auth
+token url: https://keycloak-production-75ba.up.railway.app/realms/restaurant-api/protocol/openid-connect/token
+redirect url: https://app.insomnia.rest/oauth/redirect
+
+User och passwords när man går mot restaurant-api:t:
+guest/guest123 - OBS Kontrollera! Går ändra i Keycloak inloggad som admin
+staff/staff123 - se ovan
+admin/admin123 - se ovan
+
+## Lars introduktion till uppgiften
 
 1. **[requirements.md](requirements.md)** är uppgiften. Den innehåller fyra delar, kraven för G och VG samt datum.
 2. **[skriftliga_fragor.md](skriftliga_fragor.md)** innehåller de fem frågorna i del 4.
