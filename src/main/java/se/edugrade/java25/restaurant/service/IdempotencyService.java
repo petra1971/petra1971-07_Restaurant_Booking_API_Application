@@ -19,7 +19,7 @@ public class IdempotencyService {
     public ResponseEntity<Object> createWithIdempotency(
             String idempotencyKey,
             Object body,
-            Supplier<ResponseEntity<Object>> createAction) { // createAction är något som kan ge oss ett ResponseEntity<Object> när vi ber om det.
+            Supplier<ResponseEntity<Object>> createAction) { // Supplier<T> representerar (alltid) ett funktionellt interface som kan producera eller leverera ett värde av typen T.
 
         if (idempotencyKey == null) {
             return createAction.get();

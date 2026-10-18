@@ -18,4 +18,4 @@ public record RestaurantRequest(
                     request.seats
             );
         }
-    }
+}

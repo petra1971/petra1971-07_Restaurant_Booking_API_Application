@@ -12,8 +12,7 @@ public record CreateBookingRequest(
         @NotBlank String guestName,
         @NotBlank @Email String guestEmail,
         @NotNull LocalDateTime arrivalTime,
-        @NotNull int partySize
-        ) {
+        @NotNull int partySize) {
 
         public static Booking toBooking(CreateBookingRequest request, Restaurant restaurant) {
                 return new Booking(
@@ -23,5 +22,5 @@ public record CreateBookingRequest(
                         request.partySize,
                         restaurant
                 );
-            }
         }
+}

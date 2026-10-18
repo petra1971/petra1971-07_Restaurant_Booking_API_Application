@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 public record BookingResource(
         Long id,
         String guestName,
-        String email,
+        String guestEmail,
         LocalDateTime arrivalTime,
         int partySize,
         BookingStatus status,

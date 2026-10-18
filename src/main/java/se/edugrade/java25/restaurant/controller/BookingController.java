@@ -178,8 +178,10 @@ public class BookingController {
         // Nyckeln har normalt reserverats
         // Nu kan bokningen skapas
         ResponseEntity<Object> created = doCreate(body); //Skapar svaret
+
         idempotency.store(idempotencyKey, created.getStatusCode().value(),
                 created.getHeaders().getFirst("Location"), created.getBody()); // Sparar idempotencyKey
+
         return created;
     }
 
