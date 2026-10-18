@@ -139,7 +139,9 @@ public class BookingController {
             // and returning one would be ignored at best.
             return null;
         }
-        return ResponseEntity.ok().eTag(tag).body(assembler.toModel(booking));
+        return ResponseEntity.ok()
+                .eTag(tag)
+                .body(assembler.toModel(booking));
     }
 
     /**
@@ -152,49 +154,65 @@ public class BookingController {
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody CreateBookingRequest body) {
 
+        // Ingen idempotency-nyckel skickades
+        // Skapa bokningen direkt
         if (idempotencyKey == null) {
-            return doCreate(body);
+            return doCreate(body); // Om iK saknas, gå direkt till skapa bokning, annars gå vidare till iK-kontroll
         }
 
-        // The check happens BEFORE the create logic runs. Checking afterwards
-        // would mean the duplicate already exists by the time we notice.
-        Optional<ResponseEntity<Object>> replay =
-                idempotency.claim(idempotencyKey, IdempotencyGuard.hash(body));
-        if (replay.isPresent()) {
-            return replay.get();
+        // Om claim() lyckas, dvs ny nyckel kan reserveras innebär det att nyckel inte finns sen tidigare. Optional.empty() returneras, dvs inget färdigt HTTP-svar
+        // Om nyckeln redan finns, blir previous response ett befintligt HTTP-objekt/svar
+        Optional<ResponseEntity<Object>> previousResponse =
+                idempotency.claim(                      // Alt 1. claim() Kontrollerar om nyckeln/svar redan finns. Upptäcker att den inte finns. Reserverar nyckeln.
+                        idempotencyKey,                 // Alt 2. claim() upptäcker att nyckel/svar redan finns, returnerar befintligt HTTP-svar
+                        IdempotencyGuard.hash(body));
+
+        // Om claim() returnerade ett HTTP-svar,
+        // skicka tillbaka det utan att skapa en ny bokning.
+        // Annars gå vidare till doCreate som skapar bokning och sparar nyckeln
+        if (previousResponse.isPresent()) {  // Om svar redan fanns,
+            return previousResponse.get();  // returnera det redan sparade svaret
         }
 
-        ResponseEntity<Object> created = doCreate(body);
+        // Om claim() inte returnerade svar (Optional är tom) fortsätter vi här
+        // Nyckeln har normalt reserverats
+        // Nu kan bokningen skapas
+        ResponseEntity<Object> created = doCreate(body); //Skapar svaret
         idempotency.store(idempotencyKey, created.getStatusCode().value(),
-                created.getHeaders().getFirst("Location"), created.getBody());
+                created.getHeaders().getFirst("Location"), created.getBody()); // Sparar idempotencyKey
         return created;
     }
 
     private ResponseEntity<Object> doCreate(CreateBookingRequest body) {
-        Booking saved = bookingService.create(body);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .replaceQuery(null)                                 //Tar bort eventuella query-parametrar.
-                .path("/{id}")                                      //Utgår från URL:en för den aktuella HTTP-requesten och lägger till /{id}
-                .buildAndExpand(saved.getId())                      //Ersätter {id} med ID:t från det sparade objektet
-                .toUri();                                           //Gör den färdiga URL:en till ett Java URI-objekt
-        return ResponseEntity.created(location).body(saved);        // Returnerar ett HTTP-svar med: HTTP/1.1 201 Created, location: /api/tasks/42 samt body
+        Booking saved = bookingService.create(body); // Skapar bokingen
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest() // Skapar location-header
+                .replaceQuery(null)                                 // Tar bort eventuella query-parametrar.
+                .path("/{id}")                                      // Utgår från URL:en för den aktuella HTTP-requesten och lägger till /{id}
+                .buildAndExpand(saved.getId())                      // Ersätter {id} med ID:t från det sparade objektet
+                .toUri();                                           // Gör den färdiga URL:en till ett Java URI-objekt
+        return ResponseEntity
+                .created(location)
+                .body(saved);        // Returnerar ett HTTP-svar med: HTTP/1.1 201 Created, location: /api/tasks/42 samt body
     }
 
     @PostMapping(path = "/{id}/confirm", produces = {JSON, HAL, XML})
     public EntityModel<BookingResource> confirm(@PathVariable Long id) {
         Booking booking = bookingService.confirm(id);
-        return assembler.toModel(booking);
+        return assembler
+                .toModel(booking);
     }
 
     @PostMapping(path = "/{id}/seat", produces = {JSON, HAL, XML})
     public EntityModel<BookingResource> seat(@PathVariable Long id) {
         Booking booking = bookingService.seat(id);
-        return assembler.toModel(booking);
+        return assembler
+                .toModel(booking);
     }
 
     @PostMapping(path = "/{id}/cancel", produces = {JSON, HAL, XML})
     public EntityModel<BookingResource> cancel(@PathVariable Long id) {
         Booking booking = bookingService.cancel(id);
-        return assembler.toModel(booking);
+        return assembler
+                .toModel(booking);
     }
 }
