@@ -28,6 +28,6 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8180/realms/restaurant-api} # använder railway-variabeln om den finns, annars hårdkodade url:eb
+          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8180/realms/restaurant-api} # använder railway-variabeln om den finns, annars hårdkodade url:en
 
 

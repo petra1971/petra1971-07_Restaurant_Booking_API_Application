@@ -25,6 +25,9 @@ public class HypermediaConfig {
 
     @Bean
     CurieProvider curieProvider() {
+
+        // DefaultCurieProvider definierar en CURIE (Compact URI), alltså ett förkortat namn för en relations-URI.
+        // bookings – prefixet som används framför relationsnamn i HATEOAS-länkarna t ex bookings:confirm
         return new DefaultCurieProvider("bookings",
                 UriTemplate.of("https://api.bookings.example/docs/rels/{rel}"));
     }

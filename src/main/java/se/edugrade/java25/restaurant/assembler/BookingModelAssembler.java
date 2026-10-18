@@ -38,8 +38,10 @@ public class BookingModelAssembler implements RepresentationModelAssembler<Booki
     /** The single source of truth for a task's links, whatever contract wraps it. */
     private List<Link> linksFor(Booking booking) {
         List<Link> links = new ArrayList<>();
+
         links.add(linkTo(methodOn(BookingController.class).oneById(booking.getId(), null, null))
                 .withSelfRel());
+
         links.add(linkTo(methodOn(BookingController.class).allBookings(0, 5))
                 .withRel(IanaLinkRelations.COLLECTION)); // .withRel - "vad respresenterar den här länken". IanaLinkRelations.COLLECTION - "länken leder till samlingen/collectionen som den här resursen tillhör."
 
