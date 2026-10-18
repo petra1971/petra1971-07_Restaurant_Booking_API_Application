@@ -22,7 +22,7 @@ public class CorsConfig {
 
         config.setAllowedOrigins(List.of(FRONTEND_ORIGIN));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
-        config.setAllowedHeaders(List.of("Content-Type", "Authorization"));
+        config.setAllowedHeaders(List.of("Content-Type", "Authorization", "API-Version"));
         config.setExposedHeaders(List.of("X-Total-Count"));
 
         // Eftersom allowed Origins är specificerad är det okej med AllowCredentials(true)
