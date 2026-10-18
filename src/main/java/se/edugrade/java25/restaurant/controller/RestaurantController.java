@@ -61,14 +61,12 @@ public class RestaurantController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
 
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Restaurant> result = restaurantService.findAll(pageable);
-
         return ResponseEntity.ok(offsetPage(page, clamp(size)));
     }
 
     private OffsetRestaurantPage offsetPage(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size);             // Pageable är ett interface i Spring Data som beskriver en sidindelad förfrågan (pagination).
+                                                                    // PageRequest.of() skapar ett konkret objekt som implementerar Pageable
         Page<Restaurant> result = restaurantService.findAll(pageable);
 
         return new OffsetRestaurantPage(
