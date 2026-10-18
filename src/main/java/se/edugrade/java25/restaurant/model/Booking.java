@@ -19,6 +19,7 @@ public class Booking {
     private LocalDateTime arrivalTime;
     private int partySize;
     private Instant updatedAt;
+    private boolean confirmationSent;
 
 
     @ManyToOne
@@ -42,6 +43,7 @@ public class Booking {
         this.restaurant = restaurant;
         this.status = BookingStatus.REQUESTED;
         this.revision = 1;
+        this.confirmationSent = false;
     }
 
     public Long getId() {
@@ -82,6 +84,14 @@ public class Booking {
 
     public int getRevision() {
         return revision;
+    }
+
+    public boolean setConfirmationSent() {
+        return confirmationSent = true;
+    }
+
+    public boolean isConfirmationSent() {
+        return confirmationSent;
     }
 
     public void applyUpdate(String bookersName, String email, LocalDateTime arrivalTime, int seats) {
