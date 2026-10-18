@@ -1,4 +1,4 @@
-package se.edugrade.java25.restaurant.config;
+package se.edugrade.java25.restaurant.security;
 
 import java.util.List;
 import org.springframework.context.annotation.Bean;
@@ -19,16 +19,20 @@ public class CorsConfig {
     @Bean
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
+
         config.setAllowedOrigins(List.of(FRONTEND_ORIGIN));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
-        config.setAllowedHeaders(List.of("Content-Type"));
+        config.setAllowedHeaders(List.of("Content-Type", "Authorization"));
         config.setExposedHeaders(List.of("X-Total-Count"));
+
         // Eftersom allowed Origins är specificerad är det okej med AllowCredentials(true)
         config.setAllowCredentials(true);
         config.setMaxAge(1800L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/bookings/**", config);
+
+        source.registerCorsConfiguration("/**", config);
+
         return source;
     }
 }
