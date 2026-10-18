@@ -83,7 +83,7 @@ public class BookingHateoasIntegrationTest {
             .body("_links['bookings:confirm'].href",
                     equalTo("http://localhost:" + port + "/bookings/1/confirm"))
 
-            // Kontrollera att confirm-länken finns.
+            // Kontrollera att cancel-länken finns.
             .body("_links['bookings:cancel'].href",
                     equalTo("http://localhost:" + port + "/bookings/1/cancel"));
     }
