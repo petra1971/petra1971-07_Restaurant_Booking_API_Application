@@ -78,8 +78,8 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, "/restaurants")
                     .hasRole("ADMIN")
 
-                    .requestMatchers(HttpMethod.GET, "/restaurants/**")
-                            .hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.GET, "/restaurants","/restaurants/**")
+                            .permitAll()
 
                     .anyRequest().authenticated()
             )
