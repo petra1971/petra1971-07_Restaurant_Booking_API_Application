@@ -1,6 +1,7 @@
 package se.edugrade.java25.restaurant.model;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import se.edugrade.java25.restaurant.repository.BookingRepository;
 import se.edugrade.java25.restaurant.repository.RestaurantRepository;
@@ -13,6 +14,7 @@ import java.util.List;
  * enough to scroll past during a demo.
  */
 @Component
+@Profile("!test") // Markerar att detta inte är data som anvädns i tester utan som används vid av applikationen lokatt
 public class SampleData implements CommandLineRunner {
 
     private final BookingRepository bookings;
