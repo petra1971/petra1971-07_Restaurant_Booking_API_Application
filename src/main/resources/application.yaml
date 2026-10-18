@@ -2,6 +2,7 @@
 # Falls back to 8080 when you run it locally.
 server:
   port: ${PORT:8080}
+  forward-headers-strategy: framework
 
 spring:
   application:
