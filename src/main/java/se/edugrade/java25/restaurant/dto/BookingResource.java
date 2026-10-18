@@ -12,6 +12,7 @@ public record BookingResource(
         LocalDateTime arrivalTime,
         int partySize,
         BookingStatus status,
+        boolean reminderSent,
         Long restaurantId
 ) {
     public static BookingResource from(Booking booking) {
@@ -22,6 +23,7 @@ public record BookingResource(
                 booking.getArrivalTime(),
                 booking.getPartySize(),
                 booking.getStatus(),
+                booking.isConfirmationSent(),
                 booking.getRestaurant().getId()
         );
     }
