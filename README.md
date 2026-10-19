@@ -22,9 +22,9 @@ token url: http://localhost:8180/realms/restaurant-api/protocol/openid-connect/t
 redirect url: https://app.insomnia.rest/oauth/redirect
 
 User och passwords när man går mot restaurant-api:t:
-guest/guest123
-staff/staff123
-admin/admin123
+guest/guest
+staff/staff
+admin/admin
 Roller: GUEST, STAFF, ADMIN
 
 guest har access att boka och hämta bokningar
@@ -33,7 +33,8 @@ admin kan skapa restaurang
 alla kan hämta restauranger
 
 När man kör med både RestaurantAPI-servern och Keycloak-servern på Railway
-Ska host i vara #@host = https://07javawebservicesassignment1restaurantapi-production.up.railway.app
+Ska host i vara #@host = https://petra1971-restaurant-frontend.up.railway.app
+
 
 I Insomnia:
 authorization url: https://keycloak-production-75ba.up.railway.app/realms/restaurant-api/protocol/openid-connect/auth
