@@ -15,12 +15,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class CorsConfig {
 
     static final String FRONTEND_ORIGIN = "http://localhost:5173";
+    static final String RAILWAY_FRONTEND_ORIGIN =
+            "https://petra1971-restaurant-frontend.up.railway.app";
 
     @Bean
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of(FRONTEND_ORIGIN));
+        config.setAllowedOrigins(List.of(FRONTEND_ORIGIN, RAILWAY_FRONTEND_ORIGIN));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         config.setAllowedHeaders(List.of("Content-Type", "Authorization", "API-Version", "Idempotency-Key"));
         config.setExposedHeaders(List.of("X-Total-Count"));

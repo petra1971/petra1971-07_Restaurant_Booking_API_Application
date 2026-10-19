@@ -15,6 +15,7 @@ Nu kan man logga in i keycloak med admin-kontot (just nu admin/admin)
 Adressen är: localhost:8181
 
 När man kör lokalt ska host i requests.http vara @host = http://localhost:8080
+
 I Insomnia: 
 authorization url http://localhost:8180/realms/restaurant-api/protocol/openid-connect/auth
 token url: http://localhost:8180/realms/restaurant-api/protocol/openid-connect/token
@@ -44,6 +45,14 @@ guest/guest - OBS Kontrollera! Går ändra i Keycloak inloggad som admin (admin/
 staff/staff - se ovan
 admin/admin - se ovan
 Roller: GUEST, STAFF, ADMIN
+
+Projektet är nu uppsatt så att frontend kan köras lokalt eller i railway
+Backend och keycloak samt dess db körs i Railway.
+
+Om jag byter till lokal backend måste min lokala Keycloak-konfiguration, 
+JWT-validering och CORS-inställningar fungera tillsammans med den.
+I .env.development ändrar jag då till VITE_API_URL=http://localhost:8080. 
+Då skickas API-anropen till min lokala Spring Boot-applikation.
 
 ## Lars introduktion till uppgiften
 

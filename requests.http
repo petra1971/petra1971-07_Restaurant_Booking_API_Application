@@ -8,10 +8,10 @@
 ### vad API:et faktiskt svarar, och den blir din demo på redovisningen.
 
 # Köra lokalt
-# @host = http://localhost:8080
+@host = http://localhost:8080
 
 # Köra på railway :
-@host = https://07javawebservicesassignment1restaurantapi-production.up.railway.app
+#@host = https://07javawebservicesassignment1restaurantapi-production.up.railway.app
 
 ### Byt till din driftsatta tjänst inför redovisningen genom att
 ### kommentera bort raden ovan och ta fram den här i stället.
@@ -106,12 +106,12 @@ Accept: application/json
 ### klistra in den. Ska ge 200.
 GET {{host}}/bookings
 Accept: application/json
-Authorization: Bearer klistra-in-token-har
+Authorization: Bearer klistra in från keycloak
 
 ### 10. Rätt inloggad, fel behörighet. En gäst som försöker bekräfta
 ### en bokning ska få 403, inte 401.
-POST {{host}}/bookings/1/confirm
-Authorization: Bearer klistra-in-gast-token-har
+POST {{host}}/bookings/2/confirm
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJlQU1jNDBCNGJqZ3RQUWNYVDRGbF9Fc3ZvQUIwZmZsOHM2cU40cDhjMlcwIn0.eyJleHAiOjE3OTIwMTE2MDIsImlhdCI6MTc5MjAxMTMwMiwiYXV0aF90aW1lIjoxNzkyMDExMzAxLCJqdGkiOiJvbnJ0YWM6ZDA5NDE5M2QtNjQxNC1jYjdjLWZhZGItYjc2NmRlOTUyNjkxIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MTgwL3JlYWxtcy9yZXN0YXVyYW50LWFwaSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiJkMWRkODIwZi05NDMxLTQxZTctYjE2Mi1kZGVhMGUzOThlMzEiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJyZXN0YXVyYW50LWZyb250ZW5kIiwic2lkIjoick9Nai1vdEdEZUs0aXlfYXQ2QWJhY2pTIiwiYWNyIjoiMSIsImFsbG93ZWQtb3JpZ2lucyI6WyJodHRwOi8vbG9jYWxob3N0OjUxNzMiXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwiU1RBRkYiLCJkZWZhdWx0LXJvbGVzLXJlc3RhdXJhbnQtYXBpIiwidW1hX2F1dGhvcml6YXRpb24iXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6InByb2ZpbGUgZW1haWwiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJTdGFmZiBBIiwicHJlZmVycmVkX3VzZXJuYW1lIjoic3RhZmYiLCJnaXZlbl9uYW1lIjoiU3RhZmYiLCJmYW1pbHlfbmFtZSI6IkEiLCJlbWFpbCI6InBldHJhQGVtYWlsLmNvbSJ9.WMXR8xFtDwP3Mr8Rdu0Ptt-NPWrTIDGi-uQcboYStxBoONdiD3Cjr8K_XwF5vsyWH-9hNFtUU8TJwZ7aQBfWutZY8UJFFb1XMKK7R-4r_nYUNRq7YlgJ74TRiJR2tFWsbphzwUnHyjIShIpy7QwVgwVam24vREe6SA85rT-iUZLga8Nc44TqiLcqHekorzUldFBJIC5nPKsLcSkIyC8rYAjmPgqkfjBbkTRG0o4r-3QKnle7iZzEKvyXKQbn91T_Y1WKM8NmZyq0IVEZ_byOPKnzNJR9evr9CMFFHXx35NLuRedudneRs37HhGTMAKvhE6rzxIef4XbbWI7zkBIziw
 
 ### 11. CORS-preflight från din frontend. Svaret ska innehålla
 ### Access-Control-Allow-Origin. Gör det inte det är CORS fel konfigurerat.
