@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.util.Optional;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping("/bookings")
@@ -87,9 +88,9 @@ public class BookingController {
     }
 
     @GetMapping(path = "/{id}", produces = {JSON, HAL, XML})
-    public ResponseEntity<EntityModel<BookingResource>> oneById(@PathVariable Long id,
-                                                   WebRequest request,
-                                                   HttpServletResponse response) {
+    public ResponseEntity<EntityModel<BookingResource>> getById(@PathVariable Long id,
+                                                                WebRequest request,
+                                                                HttpServletResponse response) {
         Booking booking = bookingService.findById(id);
         String tag = BookingETags.of(booking);  // ETag används för att avgöra om en cash är aktuell eller behöver förnyas
 
@@ -134,7 +135,7 @@ public class BookingController {
         ResponseEntity<Object> created = doCreate(body); //Skapar svaret
 
         //Reserverar/Sparar idempotencyKey och responsen i sin helhet
-        idempotency.store(idempotencyKey, created.getStatusCode().value(),
+        idempotency.storeResponse(idempotencyKey, created.getStatusCode().value(),
                 created.getHeaders().getFirst("Location"), created.getBody());
 
         return created;
@@ -145,17 +146,15 @@ public class BookingController {
         // 1. Omvandla request till Booking och spara i databasen
         Booking booking = bookingService.create(body);
 
-        // 2. Omvandla Booking till BookingResource med HATEOAS-länkar
-        EntityModel<BookingResource> model =
-                assembler.toModel(booking);
-
         // 3. Hämta self-länken som assembler redan har skapat
-        URI location = model.getRequiredLink(IanaLinkRelations.SELF)
-                .toUri();
+        URI location = linkTo(
+                methodOn(BookingController.class)
+                        .getById(booking.getId(), null, null)
+        ).toUri();
 
-        // 4. Returnera 201 Created med Location-header och HATEOAS-modell
+        // 4. Returnera 201 Created med Location-header
         return ResponseEntity.created(location)
-                .body(model);
+                .body(booking);
     }
 
     @PostMapping(path = "/{id}/confirm", produces = {JSON, HAL, XML})

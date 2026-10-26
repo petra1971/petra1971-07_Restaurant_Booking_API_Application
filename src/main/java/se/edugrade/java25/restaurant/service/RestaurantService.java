@@ -21,10 +21,10 @@ public class RestaurantService {
     }
 
     @Transactional
-    public RestaurantResponse create(RestaurantRequest request) {
+    public RestaurantResource create(RestaurantRequest request) {
         Restaurant restaurant = RestaurantRequest.toRestaurant(request);
         Restaurant saved = restaurantRepository.save(restaurant);
-        return RestaurantResponse.from(saved);
+        return RestaurantResource.from(saved);
     }
 
     public Page<Restaurant> findAll(Pageable pageable) {

@@ -34,7 +34,7 @@ public class IdempotencyService {
         }
 
         ResponseEntity<Object> created = createAction.get();
-        idempotency.store(
+        idempotency.storeResponse(
                 idempotencyKey,
                 created.getStatusCode().value(),
                 created.getHeaders().getFirst("Location"),

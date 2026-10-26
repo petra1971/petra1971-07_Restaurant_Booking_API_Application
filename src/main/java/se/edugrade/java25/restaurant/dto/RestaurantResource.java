@@ -2,15 +2,15 @@ package se.edugrade.java25.restaurant.dto;
 
 import se.edugrade.java25.restaurant.model.Restaurant;
 
-public record RestaurantResponse(
+public record RestaurantResource(
         Long id,
         String name,
         String cuisine,
         String city,
         int seats) {
 
-    public static RestaurantResponse from(Restaurant restaurant) {
-        return new RestaurantResponse(
+    public static RestaurantResource from(Restaurant restaurant) {
+        return new RestaurantResource(
                 restaurant.getId(),
                 restaurant.getName(),
                 restaurant.getCuisine(),

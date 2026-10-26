@@ -40,7 +40,7 @@ public class BookingModelAssembler implements RepresentationModelAssembler<Booki
     private List<Link> linksFor(Booking booking) {
         List<Link> links = new ArrayList<>();
 
-        links.add(linkTo(methodOn(BookingController.class).oneById(booking.getId(), null, null))
+        links.add(linkTo(methodOn(BookingController.class).getById(booking.getId(), null, null))
                 .withSelfRel());
 
         links.add(linkTo(methodOn(BookingController.class).allBookings(0, 5))

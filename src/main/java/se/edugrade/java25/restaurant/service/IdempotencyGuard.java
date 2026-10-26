@@ -32,10 +32,9 @@ public class IdempotencyGuard {
      */
     public Optional<ResponseEntity<Object>> claim(String key, String payloadHash) {
         try {
-            // saveAndFlush, not save: we need the INSERT to reach the database
-            // now, not whenever the persistence context feels like it.
-            idempotencyRecordRepository.saveAndFlush(new IdempotencyRecord(key, payloadHash));
+            idempotencyRecordRepository.saveAndFlush(new IdempotencyRecord(key, payloadHash)); // saveAndFlush, not save: we need the INSERT to reach the database now
             return Optional.empty();
+
         } catch (DataIntegrityViolationException duplicate) {
             IdempotencyRecord existing = idempotencyRecordRepository.findByIdempotencyKey(key)
                     .orElseThrow(() -> duplicate);
@@ -43,29 +42,32 @@ public class IdempotencyGuard {
             if (!existing.getPayloadHash().equals(payloadHash)) {
                 throw new IdempotencyConflictException(key);
             }
-            return Optional.of(replay(existing));
+            return Optional.of(replayResponse(existing));
         }
     }
 
-    public void store(String key, int status, String location, Object body) {
-        idempotencyRecordRepository.findByIdempotencyKey(key).ifPresent(record -> {
-            record.IdempotencyRecordResponse(status, location, objectMapper.writeValueAsString(body));
+    public void storeResponse(String key, int status, String location, Object body) {
+        idempotencyRecordRepository.findByIdempotencyKey(key).ifPresent(record
+                -> {
+            record.IdempotencyRecordResponse(status, location, objectMapper.writeValueAsString(body)); // objectMapper.writeValueAsString(body) sparar Java-objektet som JSON-sträng
             idempotencyRecordRepository.save(record);
         });
     }
 
-    private ResponseEntity<Object> replay(IdempotencyRecord record) {
+    private ResponseEntity<Object> replayResponse(IdempotencyRecord record) {
         var builder = ResponseEntity.status(record.getResponseStatus())
                 .contentType(MediaType.APPLICATION_JSON)
-                // Not a standard header, but with this, a client
-                // can tell a replay from a fresh create
+
+                // Inte standard header, men med den kan en klient skilja mellan en nyskapad och "återspelad"
                 .header("Idempotent-Replayed", "true");
+
         if (record.getResponseLocation() != null) {
             builder.header("Location", record.getResponseLocation());
         }
+
         // readTree, not the raw string: a String body would be serialized as a
         // quoted JSON string, and the client would get "{\"id\":7}".
-        return builder.body(objectMapper.readTree(record.getResponseBody()));
+        return builder.body(objectMapper.readTree(record.getResponseBody())); // objectMapper.readTree(record.getResponseBody()) läser tillbaka JSON-strängen som ett JSON-träd
     }
 
     /** Deterministic over the parsed request, so whitespace changes do not count as a different payload. */

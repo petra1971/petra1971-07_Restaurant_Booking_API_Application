@@ -15,7 +15,7 @@ import java.util.List;
  * anything.</p>
  */
 public record OffsetRestaurantPage(
-        List<RestaurantResponse> items,
+        List<RestaurantResource> items,
         int page,
         int size,
         long totalElements,
