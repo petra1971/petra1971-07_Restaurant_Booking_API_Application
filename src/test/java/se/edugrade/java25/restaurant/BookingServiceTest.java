@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import se.edugrade.java25.restaurant.model.Booking;
+import se.edugrade.java25.restaurant.model.BookingStatus;
 import se.edugrade.java25.restaurant.model.Restaurant;
 import se.edugrade.java25.restaurant.notification.NotificationClient;
 import se.edugrade.java25.restaurant.repository.BookingRepository;
@@ -16,8 +17,7 @@ import se.edugrade.java25.restaurant.service.BookingService;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -62,6 +62,7 @@ public class BookingServiceTest {
         // Assert
         verify(notificationClient).sendConfirmation(1L);
         assertTrue(booking.isConfirmationSent());
+        assertEquals(BookingStatus.CONFIRMED, booking.getStatus());
     }
 
     @Test // låter NotificationClient kasta NotificationException och verifierar att bokningen ändå bekräftas.
@@ -86,5 +87,6 @@ public class BookingServiceTest {
 
         // Assert
         assertFalse(booking.isConfirmationSent());
+        assertEquals(BookingStatus.CONFIRMED, booking.getStatus());
     }
 }

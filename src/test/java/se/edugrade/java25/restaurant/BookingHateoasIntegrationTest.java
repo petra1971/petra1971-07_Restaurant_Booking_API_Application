@@ -25,6 +25,8 @@ public class BookingHateoasIntegrationTest {
     private int port;
 
     private RequestSpecification requestSpecGuest, requestSpecStaff;
+    private Long bookingId;
+    private Long restaurantId;
 
     @Autowired
     private TestDataSeeder testDataSeeder;
@@ -33,8 +35,11 @@ public class BookingHateoasIntegrationTest {
     private JwtDecoder jwtDecoder;
 
     @BeforeEach
-    void setup() {
-        testDataSeeder.reset();
+    void setUp() {
+        TestDataSeeder.TestIds testIds = testDataSeeder.reset();  //Tömmer databasen först och fyller sen med fräsch testdata
+
+        bookingId = testIds.bookingId();
+        restaurantId = testIds.restaurantId();
 
         // Förbereder mockade JWT för de roller som testerna använder.
         RestAssuredSpecs.mockJwt(jwtDecoder, "GUEST");
@@ -51,7 +56,7 @@ public class BookingHateoasIntegrationTest {
         given()
             .spec(requestSpecGuest)
         .when()
-            .get("/bookings/1")
+            .get("/bookings/{id}", bookingId)
         .then()
             .log().body()
             .statusCode(200)
@@ -67,25 +72,30 @@ public class BookingHateoasIntegrationTest {
             .spec(requestSpecGuest)
             .accept("application/hal+json")
         .when()
-            .get("/bookings/1")
+            .get("/bookings/{id}", bookingId)
         .then()
             .spec(RestAssuredSpecs.ok())
+            .statusCode(200)
 
             // Kontrollera att self-länken pekar på bokningen.
             .body("_links.self.href",
-                    equalTo("http://localhost:" + port + "/bookings/1"))
+                    equalTo("http://localhost:%d/bookings/%d"
+                            .formatted(port, bookingId)))
 
             // Kontrollera att collection-länken pekar på listan.
             .body("_links.collection.href",
-                    equalTo("http://localhost:" + port + "/bookings?page=0&size=5"))
+                    equalTo("http://localhost:%d/bookings?page=0&size=5"
+                            .formatted(port, bookingId )))
 
             // Kontrollera att confirm-länken finns.
             .body("_links['bookings:confirm'].href",
-                    equalTo("http://localhost:" + port + "/bookings/1/confirm"))
+                    equalTo("http://localhost:%d/bookings/%d/confirm"
+                            .formatted(port, bookingId)))
 
             // Kontrollera att cancel-länken finns.
             .body("_links['bookings:cancel'].href",
-                    equalTo("http://localhost:" + port + "/bookings/1/cancel"));
+                    equalTo("http://localhost:%d/bookings/%d/cancel"
+                            .formatted(port, bookingId)));
     }
 
     @Test
@@ -95,7 +105,7 @@ public class BookingHateoasIntegrationTest {
             .spec(requestSpecStaff)
             .accept("application/hal+json")
         .when()
-            .post("/bookings/1/confirm")
+            .post("/bookings/{id}/confirm", bookingId)
         .then()
             .spec(RestAssuredSpecs.ok())
 

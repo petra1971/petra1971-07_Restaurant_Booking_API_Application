@@ -17,6 +17,8 @@ import org.springframework.http.MediaType;
 import se.edugrade.java25.restaurant.repository.IdempotencyRecordRepository;
 import se.edugrade.java25.restaurant.support.TestDataSeeder;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -42,32 +44,42 @@ class BookingIdempotencyIntegrationTest {
     @Autowired private TestDataSeeder testDataSeeder;
     @MockitoBean private JwtDecoder jwtDecoder;
 
+    private Long bookingId;
+    private Long restaurantId;
+
     @BeforeEach
     void setUp() {
-        testDataSeeder.reset();
+        TestDataSeeder.TestIds testIds = testDataSeeder.reset();  //Tömmer databasen först och fyller sen med fräsch testdata
+        restaurantId = testIds.restaurantId();
+
         idempotencyRecordRepository.deleteAll();
+    }
+
+    String bookingJson() {
+        return """
+        {
+          "restaurantId": %d,
+          "guestName": "Alice Andersson",
+          "guestEmail": "alice@example.com",
+          "arrivalTime": "2026-10-30T19:00:00",
+          "partySize": 4
+        }
+        """.formatted(restaurantId);
     }
 
     @Test
     void sameIdempotencyKeyShouldReturnSameResponse() throws Exception {
 
-        String requestBody = """
-            {
-                "restaurantId": 1,
-                "guestName": "Anna",
-                "guestEmail": "anna@example.com",
-                "arrivalTime": "2026-12-20T18:00:00",
-                "partySize": 2
-            }
-            """;
+        String key = UUID.randomUUID().toString();
 
         // Första POST-anropet
         MvcResult first = mockMvc.perform(post("/bookings")
                         .with(jwt().authorities(      // jwt() placerar en färdig JWT-autentisering i testrequestens säkerhetskontext
                                 new SimpleGrantedAuthority("ROLE_GUEST")))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("Idempotency-Key", "test-key-123")
-                        .content(requestBody))
+                        .accept("application/hal+json")
+                        .header("Idempotency-Key", key)
+                        .content(bookingJson()))
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -76,8 +88,9 @@ class BookingIdempotencyIntegrationTest {
                         .with(jwt().authorities(
                                 new SimpleGrantedAuthority("ROLE_GUEST")))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("Idempotency-Key", "test-key-123")
-                        .content(requestBody))
+                        .accept("application/hal+json")
+                        .header("Idempotency-Key", key)
+                        .content(bookingJson()))
                 .andExpect(status().isCreated())
                 .andReturn();
 
