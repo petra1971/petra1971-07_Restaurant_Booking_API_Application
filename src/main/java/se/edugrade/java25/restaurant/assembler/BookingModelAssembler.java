@@ -1,8 +1,7 @@
 package se.edugrade.java25.restaurant.assembler;
 
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.IanaLinkRelations;
-import org.springframework.hateoas.Link;
+import org.springframework.data.domain.Page;
+import org.springframework.hateoas.*;
 import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.stereotype.Component;
 import se.edugrade.java25.restaurant.controller.BookingController;
@@ -16,7 +15,9 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
- * One place decides what links a task carries.
+ * HATEOAS – servern skickar möjliga nästa steg som länker.
+ * Syfte med klassen - Att omvandla en Booking till en EntityModel<BookingResource> och
+ * lägga till de HATEOAS-länkar som är tillåtna utifrån bokningens status.
  *
  * <p>{@code toCollectionModel} comes free as a default method that calls
  * {@code toModel} per element, so the list endpoint carries no link code at
@@ -62,5 +63,62 @@ public class BookingModelAssembler implements RepresentationModelAssembler<Booki
         // self and collection, and no "isFinished": true flag is needed to say
         // so.
         return links;
+    }
+
+    public PagedModel<EntityModel<BookingResource>> toPagedModel(Page<Booking> result) {
+
+        int page = result.getNumber();
+        int size = result.getSize();
+
+        // Återanvänd befintlig toModel() för varje bokning
+        List<EntityModel<BookingResource>> items =
+                result.getContent().stream()
+                        .map(booking -> this.toModel(booking))
+                        .toList();
+
+        // Skapa information om pagineringen
+        var metadata = new PagedModel.PageMetadata(
+                size,
+                page,
+                result.getTotalElements(),
+                result.getTotalPages()
+        );
+
+        PagedModel<EntityModel<BookingResource>> model =
+                PagedModel.of(items, metadata);
+
+        // Skapa länkar till samlingens sidor
+        model.add(pageLink(page, size, IanaLinkRelations.SELF));
+
+        model.add(pageLink(0, size, IanaLinkRelations.FIRST));
+
+        if (result.getTotalPages() > 0) {
+            model.add(pageLink(
+                    result.getTotalPages() - 1,
+                    size,
+                    IanaLinkRelations.LAST));
+        }
+
+        if (result.hasPrevious()) {
+            model.add(pageLink(
+                    page - 1,
+                    size,
+                    IanaLinkRelations.PREV));
+        }
+
+        if (result.hasNext()) {
+            model.add(pageLink(
+                    page + 1,
+                    size,
+                    IanaLinkRelations.NEXT));
+        }
+
+        return model;
+    }
+
+    private Link pageLink(int page, int size, LinkRelation relation) {
+        return linkTo(methodOn(BookingController.class)
+                .allBookings(page, size))
+                .withRel(relation);
     }
 }
