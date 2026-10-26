@@ -26,7 +26,7 @@ import java.time.Duration;
 public class RestaurantController {
 
     private static final String JSON = MediaType.APPLICATION_JSON_VALUE;
-    private static final String XML = MediaType.APPLICATION_ATOM_XML_VALUE;
+    private static final String XML = MediaType.APPLICATION_XML_VALUE;
 
     private static final int MAX_PAGE_SIZE = 100;
 
@@ -61,7 +61,19 @@ public class RestaurantController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
 
-        return ResponseEntity.ok(offsetPage(page, clamp(size)));
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Restaurant> result = restaurantService.findAll(pageable);
+
+       OffsetRestaurantPage responsePage = new OffsetRestaurantPage(
+                result.getContent().stream().map(RestaurantResource::from)
+                        .toList(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages());
+
+        return ResponseEntity.ok(responsePage);
     }
 
     private OffsetRestaurantPage offsetPage(int page, int size) {
@@ -73,7 +85,7 @@ public class RestaurantController {
         Page<Restaurant> result = restaurantService.findAll(pageable);
 
         return new OffsetRestaurantPage(
-                result.getContent().stream().map(RestaurantResponse::from).toList(),
+                result.getContent().stream().map(RestaurantResource::from).toList(),
                 result.getNumber(),
                 result.getSize(),
                 result.getTotalElements(),
@@ -90,7 +102,7 @@ public class RestaurantController {
      * I detta fall beror cachen på API-versionen
      */
     @GetMapping(path = "/{id}", version = "1", produces = {JSON, XML})
-    public ResponseEntity<RestaurantResponse> oneById_V1(
+    public ResponseEntity<RestaurantResource> oneById_V1(
             @PathVariable @Valid Long id,
             WebRequest request,
             HttpServletResponse response) {
@@ -105,7 +117,9 @@ public class RestaurantController {
             // and returning one would be ignored at best.
             return null;
         }
-        return ResponseEntity.ok().eTag(tag).body(RestaurantResponse.from(restaurant));
+        return ResponseEntity.ok()
+                .eTag(tag)
+                .body(RestaurantResource.from(restaurant));
     }
 
     /**
@@ -128,7 +142,7 @@ public class RestaurantController {
     }
 
     private ResponseEntity<Object> doCreate(RestaurantRequest body) {
-        RestaurantResponse saved = restaurantService.create(body);
+        RestaurantResource saved = restaurantService.create(body);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .replaceQuery(null)                         //Tar bort eventuella query-parametrar.
                 .path("/{id}")                              //Utgår från URL:en för den aktuella HTTP-requesten och lägger till /{id}
