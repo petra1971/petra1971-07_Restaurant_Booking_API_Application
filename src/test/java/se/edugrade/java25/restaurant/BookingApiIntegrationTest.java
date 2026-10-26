@@ -41,6 +41,8 @@ public class BookingApiIntegrationTest {
     @LocalServerPort private int port;
 
     private RequestSpecification requestSpecGuest, requestSpecStaff, requestSpecAdmin;
+    private Long bookingId;
+    private Long restaurantId;
 
     // *1 - Se förklaringar längst ner
     @Autowired private TestDataSeeder testDataSeeder;
@@ -54,7 +56,10 @@ public class BookingApiIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        testDataSeeder.reset();  //Tömmer databasen först och fyller sen med fräsch testdata
+        TestDataSeeder.TestIds testIds = testDataSeeder.reset();  //Tömmer databasen först och fyller sen med fräsch testdata
+
+        bookingId = testIds.bookingId();
+        restaurantId = testIds.restaurantId();
 
         // Förbereder mockade JWT för de roller som testerna använder.
         // jwtDecoder används för att bestämma vilken JWT mocken ska returnera till Spring Security
@@ -69,22 +74,24 @@ public class BookingApiIntegrationTest {
         requestSpecAdmin = RestAssuredSpecs.request(port, "ADMIN");
     }
 
-    String booking = """
-            {
-              "restaurantId": 1,
-              "guestName": "Alice Andersson",
-              "guestEmail": "alice@example.com",
-              "arrivalTime": "2026-10-20T19:00:00",
-              "partySize": 4
-            }
-            """;
+    String bookingJson() {
+        return """
+        {
+          "restaurantId": %d,
+          "guestName": "Alice Andersson",
+          "guestEmail": "alice@example.com",
+          "arrivalTime": "2026-10-30T19:00:00",
+          "partySize": 4
+        }
+        """.formatted(restaurantId);
+    }
 
     @Test
     void getBooking_returns200() {
         given()
             .spec(requestSpecGuest)
         .when()
-            .get("/bookings/1")
+            .get("/bookings/{id}", bookingId)
         .then()
             .spec(RestAssuredSpecs.ok());
     }
@@ -93,7 +100,7 @@ public class BookingApiIntegrationTest {
     void createBooking_returns201() {
         given()
             .spec(requestSpecGuest)
-            .body(booking)
+            .body(bookingJson())
         .when()
             .post("/bookings")
         .then()
@@ -115,24 +122,23 @@ public class BookingApiIntegrationTest {
     void confirmBooking_notificationSentOnceAndConfirmationSentIsTrue() {
 
         // Arrange - Låtsas att den externa aviseringstjänsten lyckas.
-        when(notificationClient.sendConfirmation(1L))
+        when(notificationClient.sendConfirmation(bookingId))
                 .thenReturn(true);
-
-        Booking booking = bookingRepository.findById(1L)
-                .orElseThrow();
 
         // Act - Skicka ett riktigt HTTP-anrop till vårt API.
         given()
             .spec(requestSpecStaff)
         .when()
-            .post("bookings/1/confirm")
+            .post("bookings/{id}/confirm", bookingId)
         .then()
             .spec(RestAssuredSpecs.ok());
 
         // Assert - controllera att aviseringstjänsten anropades 1 gång och att isConfirmationSent uppdateras till true
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow();
         verify(notificationClient, times(1))
-                .sendConfirmation(1L);
-        assertThat(booking.isConfirmationSent());
+                .sendConfirmation(bookingId);
+        assertThat(booking.isConfirmationSent()).isTrue();
     }
 
     @Test
@@ -140,7 +146,7 @@ public class BookingApiIntegrationTest {
         given()
             .spec(requestSpecStaff)
         .when()
-            .post("bookings/1/seat")
+            .post("bookings/{id}/seat", bookingId)
         .then()
             .log().status()
             .spec(RestAssuredSpecs.illegalTransition());
