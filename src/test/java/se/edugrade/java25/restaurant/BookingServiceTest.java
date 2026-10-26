@@ -1,15 +1,11 @@
 package se.edugrade.java25.restaurant;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import se.edugrade.java25.restaurant.dto.CreateBookingRequest;
 import se.edugrade.java25.restaurant.model.Booking;
 import se.edugrade.java25.restaurant.model.Restaurant;
 import se.edugrade.java25.restaurant.notification.NotificationClient;
@@ -20,7 +16,6 @@ import se.edugrade.java25.restaurant.service.BookingService;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static io.restassured.RestAssured.when;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;

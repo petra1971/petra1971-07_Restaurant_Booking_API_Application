@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.function.Supplier;
-
+// Klassen servar Resaurant-Controllern med idenpotency
 @Service
 public class IdempotencyService {
 
@@ -15,7 +15,7 @@ public class IdempotencyService {
         this.idempotency = idempotency;
     }
 
-
+    //Se BookingController för att se koden där inget brutits ut. Förklaringar finns där.
     public ResponseEntity<Object> createWithIdempotency(
             String idempotencyKey,
             Object body,

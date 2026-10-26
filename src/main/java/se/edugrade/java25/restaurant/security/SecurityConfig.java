@@ -36,7 +36,7 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults())
 
             // CSRF är avstängt eftersom ett stateless API som använder Bearer JWT
-            // normalt inte behöver CSRF-skydd.
+            // normalt inte behöver CSRF-skydd. Default är skyddet på.
             .csrf(AbstractHttpConfigurer::disable)
 
             .sessionManagement(session -> session

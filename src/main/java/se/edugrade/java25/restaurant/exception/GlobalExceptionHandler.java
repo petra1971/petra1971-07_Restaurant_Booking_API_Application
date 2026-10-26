@@ -51,6 +51,8 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+
+
 //    /** 400, and the body names the parameter without naming a single column. */
 //    @ExceptionHandler(SortRules.InvalidQueryParameterException.class)
 //    public ProblemDetail invalidQueryParameter(SortRules.InvalidQueryParameterException e) {

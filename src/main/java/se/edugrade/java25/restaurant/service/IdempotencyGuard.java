@@ -18,11 +18,11 @@ import java.util.Optional;
 @Component
 public class IdempotencyGuard {
 
-    private final IdempotencyRecordRepository records;
+    private final IdempotencyRecordRepository idempotencyRecordRepository;
     private final ObjectMapper objectMapper;
 
-    public IdempotencyGuard(IdempotencyRecordRepository records, ObjectMapper objectMapper) {
-        this.records = records;
+    public IdempotencyGuard(IdempotencyRecordRepository idempotencyRecordRepository, ObjectMapper objectMapper) {
+        this.idempotencyRecordRepository = idempotencyRecordRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -34,10 +34,10 @@ public class IdempotencyGuard {
         try {
             // saveAndFlush, not save: we need the INSERT to reach the database
             // now, not whenever the persistence context feels like it.
-            records.saveAndFlush(new IdempotencyRecord(key, payloadHash));
+            idempotencyRecordRepository.saveAndFlush(new IdempotencyRecord(key, payloadHash));
             return Optional.empty();
         } catch (DataIntegrityViolationException duplicate) {
-            IdempotencyRecord existing = records.findByIdempotencyKey(key)
+            IdempotencyRecord existing = idempotencyRecordRepository.findByIdempotencyKey(key)
                     .orElseThrow(() -> duplicate);
 
             if (!existing.getPayloadHash().equals(payloadHash)) {
@@ -48,9 +48,9 @@ public class IdempotencyGuard {
     }
 
     public void store(String key, int status, String location, Object body) {
-        records.findByIdempotencyKey(key).ifPresent(record -> {
+        idempotencyRecordRepository.findByIdempotencyKey(key).ifPresent(record -> {
             record.IdempotencyRecordResponse(status, location, objectMapper.writeValueAsString(body));
-            records.save(record);
+            idempotencyRecordRepository.save(record);
         });
     }
 
