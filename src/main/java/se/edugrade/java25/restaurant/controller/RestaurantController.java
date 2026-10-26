@@ -65,12 +65,15 @@ public class RestaurantController {
     }
 
     private OffsetRestaurantPage offsetPage(int page, int size) {
+
+        // Exempel: GET /bookings?page=2&size=5 -> klienten vill hämta sida 2 med 5 bokningar per sida
+        // -> PageRequest.of(2, 5)
         Pageable pageable = PageRequest.of(page, size);             // Pageable är ett interface i Spring Data som beskriver en sidindelad förfrågan (pagination).
                                                                     // PageRequest.of() skapar ett konkret objekt som implementerar Pageable
         Page<Restaurant> result = restaurantService.findAll(pageable);
 
         return new OffsetRestaurantPage(
-                result.getContent().stream().map(RestaurantResource::from).toList(),
+                result.getContent().stream().map(RestaurantResponse::from).toList(),
                 result.getNumber(),
                 result.getSize(),
                 result.getTotalElements(),
@@ -87,7 +90,7 @@ public class RestaurantController {
      * I detta fall beror cachen på API-versionen
      */
     @GetMapping(path = "/{id}", version = "1", produces = {JSON, XML})
-    public ResponseEntity<RestaurantResource> oneById_V1(
+    public ResponseEntity<RestaurantResponse> oneById_V1(
             @PathVariable @Valid Long id,
             WebRequest request,
             HttpServletResponse response) {
@@ -102,7 +105,7 @@ public class RestaurantController {
             // and returning one would be ignored at best.
             return null;
         }
-        return ResponseEntity.ok().eTag(tag).body(RestaurantResource.from(restaurant));
+        return ResponseEntity.ok().eTag(tag).body(RestaurantResponse.from(restaurant));
     }
 
     /**
@@ -115,16 +118,17 @@ public class RestaurantController {
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @RequestBody @Valid RestaurantRequest body) {
 
-        // Pga DRY har jag brutit ut koden för create till en idempotencyService eftersom den fanns i båda entiteterna
+        // Pga DRY har jag brutit ut koden för create till en idempotencyService eftersom den fanns i både Restaurant och Booking-controller
+        // Har dock inte implementerat det i Booking-controllern ännu
         return idempotencyService.createWithIdempotency(
                 idempotencyKey,
                 body,
-                () -> doCreate(body)
+                () -> doCreate(body)  // En Supplier dvs ett funktionellt interface som skickas med till idempotencyService-metoden
         );
     }
 
     private ResponseEntity<Object> doCreate(RestaurantRequest body) {
-        RestaurantResource saved = restaurantService.create(body);
+        RestaurantResponse saved = restaurantService.create(body);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .replaceQuery(null)                         //Tar bort eventuella query-parametrar.
                 .path("/{id}")                              //Utgår från URL:en för den aktuella HTTP-requesten och lägger till /{id}

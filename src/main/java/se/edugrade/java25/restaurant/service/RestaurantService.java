@@ -9,8 +9,6 @@ import se.edugrade.java25.restaurant.exception.RestaurantNotFoundException;
 import se.edugrade.java25.restaurant.model.Restaurant;
 import se.edugrade.java25.restaurant.repository.RestaurantRepository;
 
-import java.util.List;
-
 // Business logic lives here, not in the controller. The controller only
 // maps DTOs and delegates.
 @Service
@@ -23,10 +21,10 @@ public class RestaurantService {
     }
 
     @Transactional
-    public RestaurantResource create(RestaurantRequest request) {
+    public RestaurantResponse create(RestaurantRequest request) {
         Restaurant restaurant = RestaurantRequest.toRestaurant(request);
         Restaurant saved = restaurantRepository.save(restaurant);
-        return RestaurantResource.from(saved);
+        return RestaurantResponse.from(saved);
     }
 
     public Page<Restaurant> findAll(Pageable pageable) {

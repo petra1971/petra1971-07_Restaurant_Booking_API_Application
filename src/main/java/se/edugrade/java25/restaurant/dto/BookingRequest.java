@@ -7,14 +7,14 @@ import se.edugrade.java25.restaurant.model.Booking;
 import se.edugrade.java25.restaurant.model.Restaurant;
 import java.time.LocalDateTime;
 
-public record CreateBookingRequest(
+public record BookingRequest(
         @NotNull Long restaurantId,
         @NotBlank String guestName,
         @NotBlank @Email String guestEmail,
         @NotNull LocalDateTime arrivalTime,
         @NotNull int partySize) {
 
-        public static Booking toBooking(CreateBookingRequest request, Restaurant restaurant) {
+        public static Booking toBooking(BookingRequest request, Restaurant restaurant) {
                 return new Booking(
                         request.guestName,
                         request.guestEmail,

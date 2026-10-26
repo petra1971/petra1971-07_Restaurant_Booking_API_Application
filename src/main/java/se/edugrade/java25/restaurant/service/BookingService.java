@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.edugrade.java25.restaurant.notification.NotificationClient;
-import se.edugrade.java25.restaurant.dto.CreateBookingRequest;
+import se.edugrade.java25.restaurant.dto.BookingRequest;
 import se.edugrade.java25.restaurant.exception.BookingNotFoundException;
 import se.edugrade.java25.restaurant.exception.RestaurantNotFoundException;
 import se.edugrade.java25.restaurant.model.Booking;
@@ -34,9 +34,9 @@ public class BookingService {
     }
 
     @Transactional
-    public Booking create(CreateBookingRequest request) {
+    public Booking create(BookingRequest request) {
         Restaurant restaurant = getRestaurantByIdOrThrow(request.restaurantId());
-        Booking booking = CreateBookingRequest.toBooking(request, restaurant);
+        Booking booking = BookingRequest.toBooking(request, restaurant);
         return bookingRepository.save(booking);
     }
 
