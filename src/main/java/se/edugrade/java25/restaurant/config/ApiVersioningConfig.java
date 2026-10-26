@@ -27,15 +27,8 @@ public class ApiVersioningConfig implements WebMvcConfigurer {
     public void configureApiVersioning(ApiVersionConfigurer configurer) {
         configurer
                 .useRequestHeader(VERSION_HEADER)
-
-                // NOT the default. Out of the box a version is required, and a
-                // request without the header gets 400. Optional + a default is the migration-safe
-                // setting; "required" is a decision you make later, on purpose.
                 .setVersionRequired(false)
                 .setDefaultVersion("1")
-
-                // Supported versions are detected from the declared mappings,
-                // so API-Version: 99 answers 400 without us listing anything.
                 .setDeprecationHandler(deprecationHandler());
     }
 
@@ -67,7 +60,11 @@ public class ApiVersioningConfig implements WebMvcConfigurer {
 
                 .setDeprecationDate(ZonedDateTime.of(2026, 3, 1, 0, 0, 0, 0, ZoneOffset.UTC))
                 .setSunsetDate(ZonedDateTime.of(2026, 12, 1, 0, 0, 0, 0, ZoneOffset.UTC))
-                .setDeprecationLink(URI.create("https://api.restaurantapi.example/docs/deprecation/v1"));
+                .setDeprecationLink(URI.create(
+                        // Länken fungerar inte så länge jag inte har skapat sidan med information
+//                        "https://07javawebservicesassignment1restaurantapi-production.up.railway.app/docs/deprecation/v1"));
+                        // Tills dess kan jag istället använda mig av den existerade openApi-sidan
+                        "https://07javawebservicesassignment1restaurantapi-production.up.railway.app/swagger-ui/index.html"));
         return handler;
     }
 }

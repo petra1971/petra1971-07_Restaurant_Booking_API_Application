@@ -7,6 +7,9 @@ import org.springframework.hateoas.mediatype.hal.CurieProvider;
 import org.springframework.hateoas.mediatype.hal.DefaultCurieProvider;
 
 /**
+ * Hänger ihop med HATEOS.
+ * CURIE förklarar vad relationen som HATEOAS-länken representerar betyder.
+ *
  * Namespaces our own link relations.
  *
  * <p>A bare {@code "confirm"} is a global claim on a common English word.
@@ -28,7 +31,10 @@ public class HypermediaConfig {
 
         // DefaultCurieProvider definierar en CURIE (Compact URI), alltså ett förkortat namn för en relations-URI.
         // bookings – prefixet som används framför relationsnamn i HATEOAS-länkarna t ex bookings:confirm
+        //
         return new DefaultCurieProvider("bookings",
-                UriTemplate.of("https://api.bookings.example/docs/rels/{rel}"));
+                UriTemplate.of(
+                        // Länken fungerar inte så länge jag inte har skapat sidor med beskrivningar av länkarna
+                        "https://07javawebservicesassignment1restaurantapi-production.up.railway.app/docs/rels/{rel}"));
     }
 }
