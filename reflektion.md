@@ -33,7 +33,7 @@ CSRF-skydd handlar om förhindra otillåtna state-changing requests att nå ett 
 Spring Security ska inte skapa eller använda en HTTP-session för att lagra SecurityContext mellan requester. Varje request
 måste ansvara för sin egen säkerhet.
 Jag använder oauth2 för autentisering. För att en request ska accepteras krävs då att Bearer token skickas med 
-Authorization-header i varje statechanging request. Webläsaren lägger normalt inte till en sådan (som sker med session-cookie)
+Authorization-header i varje state changing request. Webläsaren lägger normalt inte till en sådan (som sker med session-cookie)
 och därmed **kan en angripare normalt inte få webläsaren att skicka en sådan request. 
 Slutsats: jag kan stänga av CSRF-skyddet genom att lägga till detta I min spring security config: .csrf(AbstractHttpConfigurer::disable) **
 OM jag inte hade stängt av CSRF hade Spring security krävt en CSRF-token för alla state-changing requests 
