@@ -76,7 +76,7 @@ public class SecurityConfig {
 //                            .hasRole("STAFF")
 
                     .requestMatchers(HttpMethod.POST, "/restaurants")
-                    .hasRole("ADMIN")
+                    .hasRole("GUEST, STAFF, ADMIN")
 
                     .requestMatchers(HttpMethod.GET, "/restaurants","/restaurants/**")
                             .hasRole("ADMIN")
