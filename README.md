@@ -11,6 +11,26 @@ För att starta keycloak-server:
 2. I tearminal cd C:\git\07_webservices_KeyCloak_Oauth2_OIDC 
 3. starta containern: docker compose up -d
 
+## Kör applikationen lokalt
+
+```bash
+mvn spring-boot:run
+```
+
+I ett annat fönster:
+
+```bash
+curl localhost:8080/health
+```
+
+Du ska få tillbaka `{"status":"UP","service":"restaurant-api"}`. Om du får det fungerar din miljö, och du kan börja med del 1.
+
+Kör testerna med:
+
+```bash
+mvn test
+```
+
 Nu kan man logga in i keycloak med admin-kontot (just nu admin/admin)
 Adressen är: localhost:8181
 

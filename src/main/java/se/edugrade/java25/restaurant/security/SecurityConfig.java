@@ -65,21 +65,21 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.POST, "/bookings")
                             .hasAnyRole("GUEST", "STAFF")
 
-                    .requestMatchers(HttpMethod.POST, "/bookings/{id}/confirm")
+                    .requestMatchers(HttpMethod.POST, "/bookings/{id}/confirm", "/bookings/{id}/seat","/bookings/{id}/cancel")
 //                            .permitAll() // Används för att testa utan token
                     .hasRole("STAFF")
 
-                    .requestMatchers(HttpMethod.POST, "/bookings/{id}/seat")
-                            .hasRole("STAFF")
-
-                    .requestMatchers(HttpMethod.POST, "/bookings/{id}/cancel")
-                            .hasRole("STAFF")
+//                    .requestMatchers(HttpMethod.POST, "/bookings/{id}/seat")
+//                            .hasRole("STAFF")
+//
+//                    .requestMatchers(HttpMethod.POST, "/bookings/{id}/cancel")
+//                            .hasRole("STAFF")
 
                     .requestMatchers(HttpMethod.POST, "/restaurants")
                     .hasRole("ADMIN")
 
                     .requestMatchers(HttpMethod.GET, "/restaurants","/restaurants/**")
-                            .permitAll()
+                            .hasRole("ADMIN")
 
                     .anyRequest().authenticated()
             )

@@ -50,7 +50,6 @@ public class BookingApiIntegrationTest {
     // Spring skapar här ett mock-objekt med Mockito och använder det i stället
     // för den riktiga beanen i testkontexten.
     @MockitoBean private JwtDecoder jwtDecoder;
-
     @MockitoBean private NotificationClient notificationClient;
     @Autowired private BookingRepository bookingRepository;
 
