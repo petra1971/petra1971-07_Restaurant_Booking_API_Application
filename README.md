@@ -3,7 +3,10 @@
 ### Att köra projektet lokalt eller på Railway
 
 Lokalt använder man en keycloak autentiserings-server i docker. 
-Det projektet finns i C:\git\07_webservices_KeyCloak_Oauth2_OIDC 
+För att starta en KeyCLoak-server gör man klokast att be AI om hjälp. Jag bifogar även en instruktion som KAN vara till
+hjälp.
+
+Lokalt har jag ett separat projekt för detta i C:\git\07_webservices_KeyCloak_Oauth2_OIDC 
 och där finns även docker-compose med admin-konto/password för att logga in i keycloak lokalt
 
 För att starta keycloak-server:
@@ -34,7 +37,10 @@ mvn test
 Nu kan man logga in i keycloak med admin-kontot (just nu admin/admin)
 Adressen är: localhost:8181
 
-När man kör lokalt ska host i requests.http vara @host = http://localhost:8080
+När man kör lokalt ska host i filen "requests.http" vara @host = http://localhost:8080
+
+När man kör med både RestaurantAPI-servern och Keycloak-servern på Railway
+Ska host i vara #@host = https://petra1971-restaurant-frontend.up.railway.app
 
 I Insomnia: 
 authorization url http://localhost:8180/realms/restaurant-api/protocol/openid-connect/auth
@@ -52,10 +58,6 @@ staff kan hämta bokningar och ändra status på bokningar
 admin kan skapa restaurang
 alla kan hämta restauranger
 
-När man kör med både RestaurantAPI-servern och Keycloak-servern på Railway
-Ska host i vara #@host = https://petra1971-restaurant-frontend.up.railway.app
-
-
 I Insomnia:
 authorization url: https://keycloak-production-75ba.up.railway.app/realms/restaurant-api/protocol/openid-connect/auth
 token url: https://keycloak-production-75ba.up.railway.app/realms/restaurant-api/protocol/openid-connect/token
@@ -70,10 +72,11 @@ Roller: GUEST, STAFF, ADMIN
 Projektet är nu uppsatt så att frontend kan köras lokalt eller i railway
 Backend och keycloak samt dess db körs i Railway.
 
-Om jag byter till lokal backend måste min lokala Keycloak-konfiguration, 
+Om jag byter till lokal backend måste min lokala Keycloak-konfiguration (i docker-container), 
 JWT-validering och CORS-inställningar fungera tillsammans med den.
 I .env.development ändrar jag då till VITE_API_URL=http://localhost:8080. 
 Då skickas API-anropen till min lokala Spring Boot-applikation.
+I frontend måste configs för backend-url:er också ses över,
 
 ## Lars introduktion till uppgiften
 
@@ -82,20 +85,11 @@ Då skickas API-anropen till min lokala Spring Boot-applikation.
 
 Deadline är onsdag den 14 oktober 2026 kl. 08.00. Muntlig redovisning sker onsdagen den 14 oktober 2026.
 
-## Vad som redan finns
-
-Ett tomt Spring Boot-projekt. Det innehåller Spring Web och ingenting annat, så att du slipper börja med en tom mapp och själv kan välja alla beroenden som du lägger till.
+## Tekniker
 
 ```text
 pom.xml                          Spring Boot 4.1.0, Java 25
-requests.http                    färdiga anrop mot API:et
-src/main/java/.../restaurant/
-    RestaurantApiApplication.java
-    HealthController.java        GET /health, svarar {"status":"UP"}
-src/main/resources/
-    application.yaml             appnamn och port
-src/test/java/.../restaurant/
-    RestaurantApiApplicationTests.java
+
 ```
 
 `HealthController` är inte en del av uppgiften. Behåll den för en snabb kontroll efter en deploy, eller radera den när du har egna endpoints.
@@ -124,37 +118,3 @@ mvn test
 
 I `requests.http` finns anropen mot API:et. Öppna filen i IntelliJ och klicka på den gröna pilen till vänster om ett anrop, eller installera tillägget REST Client i VS Code.
 
-Endast hälsokontrollen fungerar i det utdelade projektet. Resten är bortkommenterad, med ett anrop per krav i uppgiften, och du tar fram dem allteftersom du bygger. Anropen visar också vad som ska hända, till exempel att en okänd bokning ger 404 som `problem+json` och att en gäst som försöker bekräfta får 403 i stället för 401.
-
-Byt ut `@host` överst i filen mot URL:en till din driftsatta tjänst inför redovisningen. Då har du en färdig demo i stället för att behöva skriva curl-kommandon inför publik.
-
-## Beroenden du själv lägger till
-
-Ingenting utöver Spring Web finns i `pom.xml`. Du lägger själv till det du behöver, del för del.
-
-För del 1 behöver du persistens, validering, HATEOAS och springdoc. För del 2 behöver du RestAssured och en mockningsmodul. För del 3 behöver du Spring Security som resource server. Kapitlen visar exakt vilka artefakter det gäller.
-
-## Fyra fällor som kostar timmar
-
-Det här är sådant som inte syns i ett felmeddelande och som du inte lär dig något av att fastna på.
-
-**1. `ProblemDetail` är avstängt som standard.** Del 1 kräver att ett okänt id ger 404 som `problem+json`. Spring Boot svarar med en tom body tills du lägger till följande i `application.yaml`:
-
-```yaml
-spring:
-  mvc:
-    problemdetails:
-      enabled: true
-```
-
-**2. Boot 4 delade upp testmodulerna.** `spring-boot-starter-test` innehåller inte längre allt. `@WebMvcTest` kräver `spring-boot-webmvc-test`, `@DataJpaTest` kräver `spring-boot-data-jpa-test`, och `TestRestTemplate` kräver både `spring-boot-resttestclient` och `spring-boot-restclient`. Alla ska ha `test`-scope. Om de saknas får du ett annotationsfel som ser ut som ett stavfel.
-
-**3. Jackson 3 bytte paket.** Importerna heter `tools.jackson.*`, inte `com.fasterxml.jackson.*`. Om du kopierar en kodsnutt från nätet är den nästan alltid skriven för Jackson 2.
-
-**4. `/health` låses när du lägger till säkerhet i del 3.** Din hostingplattform pingar oftast en hälsoendpoint för att avgöra om tjänsten är igång. Om den svarar med 401 stängs din deploy ner. Släpp uttryckligen igenom den i din `SecurityFilterChain`.
-
-## Frivilligt: en frontend
-
-Du får bygga en frontend och vibe-koda den. Den bedöms inte, men CORS i del 3 blir mycket mer konkret när en riktig sida på en annan origin anropar ditt API. Dessutom får du något annat än Swagger UI att visa under redovisningen.
-
-**Lycka till**
