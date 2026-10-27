@@ -7,10 +7,10 @@
 ### vad API:et faktiskt svarar, och den blir din demo på redovisningen.
 
 # Port för att köra lokalt
-@host = http://localhost:8080
+#host = http://localhost:8080
 
 # Köra på railway :
-#@host = https://07javawebservicesassignment1restaurantapi-production.up.railway.app
+@host = https://petra1971-07restaurantbookingapiapplication-production.up.railway.app
 
 ### 1. Lever tjänsten? Svarar 200 och {"status":"UP","service":"restaurant-api"}.cd
 GET {{host}}/health
@@ -29,7 +29,7 @@ Accept: application/json
 ### ---------------------------------------------------------------------
 
 ## 2a. Lista restauranger. Offset-paginerat.
-GET {{host}}/restaurants?page=0&size=2
+GET {{host}}/restaurants?page=0&size=100
 Accept: application/json
 
 ### 2b. Offset. Lista bokningar. Offset-paginerat

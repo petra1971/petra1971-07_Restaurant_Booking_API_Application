@@ -4,7 +4,8 @@
 
 Du fattade två beslut i del 3. Du konfigurerade CORS för en origin och valde att antingen stänga av eller behålla CSRF-skyddet.
 
-Förklara båda besluten. Vad skyddar CORS mot, vad skyddar CSRF mot och varför är det inte samma sak? Beskriv konkret vad som hade kunnat hända i just din bokningstjänst om du hade fattat fel beslut om CSRF.
+Förklara båda besluten. Vad skyddar CORS mot, vad skyddar CSRF mot och varför är det inte samma sak? Beskriv konkret vad 
+som hade kunnat hända i just din bokningstjänst om du hade fattat fel beslut om CSRF.
 
 **Räcker för G:** du håller isär de två sakerna och motiverar ditt CSRF-beslut korrekt utifrån din arkitektur.
 
@@ -18,15 +19,26 @@ Svar
 
 **CSRF → kan någon förfalska en autentiserad request?**
 
-CORS: Cross-Origin Resource Sharing, när ett javascript I en websida med ett visst origin, anropar ett API med en annan origin och ändå får lov att läsa svaret.
-
-Same Origin Policy är browserns grundregel, dvs den som anropar måste ha samma origin som tjänsten/API:t som anropas. Min Vue/Rewact-frontend som körs i Railway med origin [**https://restaurant-frontend.up.railway.app**](https://restaurant-frontend.up.railway.app/) anropar mitt backend REST-API med en annan origin [**https://restaurant-api.up.railway.app**](https://restaurant-api.up.railway.app/)**. **Detta skulle normalt blockas, eftersom Same Origin Policy är browserns grundregel, men jag har har konfigurerat Spring Security att göra ett undantag och tillåta frontend att läsa svaret, dvs 1. API:t svarar med *Access-*Control-Allow-Origin:* *[**https://restaurant-frontend.up.railway.app**](https://restaurant-frontend.up.railway.app/)*,*2. browsern jämför med javascriptets origin, 3. Eftersom de är exakt samma skickas svaret vidare till FE-javascriptet. **
+CORS: Cross-Origin Resource Sharing, när ett javascript I en websida med ett visst origin, anropar ett API med en annan
+origin och ändå får lov att läsa svaret.
+Same Origin Policy är browserns grundregel, dvs den som anropar måste ha samma origin som tjänsten/API:t som anropas. 
+Min Vue/Rewact-frontend som körs i Railway med origin [**https://restaurant-frontend.up.railway.app**](https://restaurant-frontend.up.railway.app/) anropar mitt backend 
+REST-API med en annan origin [**https://restaurant-api.up.railway.app**](https://restaurant-api.up.railway.app/)**. **Detta skulle normalt blockas, eftersom 
+Same Origin Policy är browserns grundregel, men jag har har konfigurerat Spring Security att göra ett undantag och tillåta 
+frontend att läsa svaret, dvs 1. API:t svarar med *Access-*Control-Allow-Origin:* *[**https://restaurant-frontend.up.railway.app**](https://restaurant-frontend.up.railway.app/)*,
+*2. browsern jämför med javascriptets origin, 3. Eftersom de är exakt samma skickas svaret vidare till FE-javascriptet. **
 
 CSRF: Cross Site Request Forgery.
-
-CSRF-skydd handlar om förhindra otillåtna state-changing requests att nå ett API. Men eftersom mitt API kräver Bearer token (*Authorization: Bearer \<token\>*) för att en request ska accepteras och webläsaren inte automatiskt lägger till en sådan på en request från en annan webbplats, **kan en angripare normalt inte få webläsaren att skicka en sådan **request. Slutsats: jag kan stänga av CSRF-skyddet genom att lägga till detta I min spring security config: .csrf(AbstractHttpConfigurer::disable) **
-
-**OM jag inte hade stängt av CSRF hade Spring security krävt en CSRF-token för alla state-changing requests (POST, **PUT**, **PATCH, **DELETE) **i** tillägg till bearer jwt/token. Men eftersom det inte finns någon sådan skulle svaret bli 403 **på alla såna requests vilket INTE skulle vara bra.**.**
+CSRF-skydd handlar om förhindra otillåtna state-changing requests att nå ett API. Mitt API är stateless, dvs
+Spring Security ska inte skapa eller använda en HTTP-session för att lagra SecurityContext mellan requester. Varje request
+måste ansvara för sin egen säkerhet.
+Jag använder oauth2 för autentisering. För att en request ska accepteras krävs då att Bearer token skickas med 
+Authorization-header i varje statechanging request. Webläsaren lägger normalt inte till en sådan (som sker med session-cookie)
+och därmed **kan en angripare normalt inte få webläsaren att skicka en sådan request. 
+Slutsats: jag kan stänga av CSRF-skyddet genom att lägga till detta I min spring security config: .csrf(AbstractHttpConfigurer::disable) **
+OM jag inte hade stängt av CSRF hade Spring security krävt en CSRF-token för alla state-changing requests 
+(POST, **PUT**, **PATCH, **DELETE) **i** tillägg till bearer jwt/token. Men eftersom det inte finns någon sådan skulle 
+svaret bli 403 **på alla såna requests vilket INTE skulle vara bra.**.**
 
 ## Fråga 2: SOAP och WSDL
 
@@ -175,8 +187,8 @@ flowchart TB
 
 *En Trace – flera Spans*
 
-
-Ett tänkbart fel är att aviseringstjänsten inte svarar när BookingService försöker skicka en bokningsbekräftelse. Bokningen kan redan vara sparad i databasen, men aviseringen misslyckas.
+Ett tänkbart fel är att aviseringstjänsten inte svarar när BookingService försöker skicka en bokningsbekräftelse. 
+Bokningen kan redan vara sparad i databasen, men aviseringen misslyckas.
 
 Gästen kan då få besked om att bokningen lyckades men inte få något bekräftelsemejl.
 
@@ -202,7 +214,8 @@ Svar:
 
 Svar: som microservices måste komponenterna prata med varandra och de behöver hålla reda på url:er för att göra det. Spring cloud erbjuder eureka service registry och service discovery. Eureka registrerar alla tjänster och varje registrerad tjänst skickar regelbundet ett livstecken, ett så kallat heartbeat. Om en tjänst slutar skicka heartbeat kommer den efter en specifik tid avregistreras.
 
-Registrerade tjänster kan hitta varandra genom att Spring injicerar en färdig DiscoveryClient (interface). DiscoveryClient kan mha .*getInstances() hitta instanser av en viss tjänst*
+Registrerade tjänster kan hitta varandra genom att Spring injicerar en färdig DiscoveryClient (interface) i dem som sedan
+hittar instanser av en viss tjänst.
 
 |                           |                                                                 |
 |---------------------------|-----------------------------------------------------------------|
@@ -212,11 +225,11 @@ Registrerade tjänster kan hitta varandra genom att Spring injicerar en färdig 
 | Spring Cloud LoadBalancer | Väljer vilken instans som ska ta emot ett HTTP-anrop            |
 
 
-## Beslut:
+## Dokumenterade beslut:
 ### Del 1: Del 1: REST-API
 Paginering på /restaurants. Jag väljer Offset pagination eftersom risken för pageDrift inte är så stor 
 (inte frekvent att restauranger läggs till) och att antal restauranger förväntas bli begränsade. 
-Det är enkelt att implementera.
+Det är också enkelt att implementera.
 
 ## Del 2: Tester och mockning
 Jag har använt mig av Mockito i både BookoingService-test och BookingApiIntegrationTest. Eftersom jag inte har någon 
@@ -231,3 +244,14 @@ WireMock: LoanService → NotificationClient → riktig HttpNotificationClient �
 ### Del 3: Säkerhet och drift
 CSRF: fatta ett beslut och skriv en kommentar i koden om varför det är rätt beslut för just din tjänst. 
 CORS ska vara konfigurerat för din frontends origin. Du ska inte använda wildcard tillsammans med credentials, och du ska veta varför.
+
+CSRF: se svar på fråga 1.
+Mitt API är stateless, dvs Spring Security ska inte skapa eller använda en HTTP-session för att lagra SecurityContext mellan requester.
+Varje request måste kunna autentiseras på nytt utifrån den information som följer med just den requesten.
+Detta har jag konfigurerat i SecurityConfig .sessionManagement(session -> session .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+Access-Control-Allow-Origin: *. I CORS betyder wildcard-tecknet * ungefär ”vilken origin som helst”, dvs svaret får 
+läsas från vilken origin som helst.
+OM jag samtidigt har Access-Control-Allow-Credentials: true, dvs om credentials samtidigt tillåts skulle en evil
+webbplats kunna försöka göra ett anrop där användarens inloggningsinformation följer med och sedan läsa ett svar som 
+hör till den inloggade användaren.
